@@ -1,4 +1,4 @@
-# FpsLatencyMeter
+# FPS & Latency Meter
 WoW addon to show FPS and latency information in real time. *It's supported for WoW Retail, Mists of Pandaria Classic, and Classic era.*
 
 ### - Features -

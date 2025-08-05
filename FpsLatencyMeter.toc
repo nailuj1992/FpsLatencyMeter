@@ -1,0 +1,9 @@
+## Interface: 50500
+## Version: 0.1.0
+## Title: FPS & Latency Meter
+## Notes: Shows the current FPS and latency of the client.
+## Author: Nailuj1992
+## SavedVariables: FpsLatencyMeterConfig
+
+options.lua
+main.lua

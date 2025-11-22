@@ -1,5 +1,5 @@
-## Interface: 11507,50500,50501,110200,110205
-## Version: 0.1.1
+## Interface: 11507,11508,50500,50501,50502,50503,110205,110207,120000,120002
+## Version: 0.1.2
 ## Title: FPS & Latency Meter
 ## Notes: Shows the current FPS and latency of the client.
 ## Author: Nailuj1992

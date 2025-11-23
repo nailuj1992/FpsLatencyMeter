@@ -1,9 +1,15 @@
 ## Interface: 11507,11508,50500,50501,50502,50503,110205,110207,120000,120002
-## Version: 0.1.2
+## Version: 0.1.3
 ## Title: FPS & Latency Meter
 ## Notes: Shows the current FPS and latency of the client.
 ## Author: Nailuj1992
 ## SavedVariables: FpsLatencyMeterConfig
+
+#@no-lib-strip@
+embeds.xml
+#@end-no-lib-strip@
+
+Libs\LibGroupInSpecT-1.1\lib.xml
 
 options.lua
 main.lua

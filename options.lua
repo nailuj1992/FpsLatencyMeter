@@ -6,6 +6,8 @@ local addOnTitle = GetAddOnMetadata(addOnName, "Title") or "FpsLatencyMeter"
 local clientVersionString = GetBuildInfo()
 local clientBuildMajor = string.byte(clientVersionString, 1)
 
+local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
+
 _G[addOnName] = {}
 local TT = _G[addOnName]
 
@@ -26,18 +28,22 @@ function TT:GetDefaults()
     }
 end
 
+local function ResetColors(options)
+    options.highColorLabel.colorPicker.SetDisabled(not FpsLatencyMeterConfig.changeColor)
+    options.mediumColorLabel.colorPicker.SetDisabled(not FpsLatencyMeterConfig.changeColor)
+    options.lowColorLabel.colorPicker.SetDisabled(not FpsLatencyMeterConfig.changeColor)
+
+    if FpsLatencyMeterConfig.changeColor then
+        options.highColorLabel.colorPicker:SetColor(unpack(FpsLatencyMeterConfig.highColor))
+        options.mediumColorLabel.colorPicker:SetColor(unpack(FpsLatencyMeterConfig.mediumColor))
+        options.lowColorLabel.colorPicker:SetColor(unpack(FpsLatencyMeterConfig.lowColor))
+    end
+end
+
 local function resetCfg(options)
     FpsLatencyMeterConfig = TT:GetDefaults()
     if options then
-        options.highColorSwatch.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-        options.mediumColorSwatch.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-        options.lowColorSwatch.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-
-        if FpsLatencyMeterConfig.changeColor then
-            options.highColorSwatch.texture:SetVertexColor(unpack(FpsLatencyMeterConfig.highColor))
-            options.mediumColorSwatch.texture:SetVertexColor(unpack(FpsLatencyMeterConfig.mediumColor))
-            options.lowColorSwatch.texture:SetVertexColor(unpack(FpsLatencyMeterConfig.lowColor))
-        end
+        ResetColors(options)
     end
 end
 
@@ -210,13 +216,13 @@ frame:SetScript("OnShow", function(frame)
         function(self, value)
             FpsLatencyMeterConfig.changeColor = value
             if value then
-                options.highColorSwatch.SetDisabled(false)
-                options.mediumColorSwatch.SetDisabled(false)
-                options.lowColorSwatch.SetDisabled(false)
+                options.highColorLabel.colorPicker.SetDisabled(false)
+                options.mediumColorLabel.colorPicker.SetDisabled(false)
+                options.lowColorLabel.colorPicker.SetDisabled(false)
             else
-                options.highColorSwatch.SetDisabled(true)
-                options.mediumColorSwatch.SetDisabled(true)
-                options.lowColorSwatch.SetDisabled(true)
+                options.highColorLabel.colorPicker.SetDisabled(true)
+                options.mediumColorLabel.colorPicker.SetDisabled(true)
+                options.lowColorLabel.colorPicker.SetDisabled(true)
             end
             TT:UpdateFrames()
         end)
@@ -226,60 +232,42 @@ frame:SetScript("OnShow", function(frame)
         local colorLabel = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
         colorLabel:SetText(label)
 
-        local colorSwatch = CreateFrame("Button", "FpsLatencyColorSwatch" .. name, frame, "ColorSwatchTemplate")
-        colorSwatch:SetSize(25, 25)
+        local colorPicker = AceGUI:Create("ColorPicker")
+        colorPicker:SetLabel("")
+        colorPicker:SetWidth(25)
+        colorPicker:SetHeight(25)
 
-        local currentColor = { unpack(initialColor) }
+        local r, g, b = unpack(initialColor)
+        colorPicker:SetColor(r, g, b, 1) -- Alpha defaults to 1
 
-        local t = colorSwatch:CreateTexture(nil, "BACKGROUND")
-        t:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
-        t:SetAllPoints(colorSwatch)
-        t:SetVertexColor(unpack(currentColor))
-        colorSwatch.texture = t
+        local currentColor = { r, g, b }
 
-        colorSwatch.tooltipText = label
-        colorSwatch.tooltipRequirement = description
+        local aceFrame = colorPicker.frame
+        aceFrame:SetParent(frame)
+        aceFrame:SetSize(25, 25)
+        aceFrame:Show()
 
-        colorSwatch:SetScript("OnClick", function()
-            local r, g, b = unpack(currentColor)
-
-            ColorPickerFrame:SetColorRGB(r, g, b)
-            ColorPickerFrame.hasOpacity = false
-            ColorPickerFrame.previousValues = { r, g, b }
-
-            ColorPickerFrame.swatchFunc = function()
-                if ColorPickerFrame:IsVisible() then
-                    local nr, ng, nb = ColorPickerFrame:GetColorRGB()
-                    colorSwatch.texture:SetVertexColor(nr, ng, nb)
-                    currentColor = { nr, ng, nb }
-                    SetColor(nr, ng, nb)
-                end
-            end
-
-            ColorPickerFrame.cancelFunc = function(previousValues)
-                local nr, ng, nb = unpack(previousValues)
-                colorSwatch.texture:SetVertexColor(nr, ng, nb)
-                currentColor = { nr, ng, nb }
-                SetColor(nr, ng, nb)
-            end
-
-            ColorPickerFrame:Hide()
-            ColorPickerFrame:Show()
+        colorPicker:SetCallback("OnValueChanged", function(widget, event, newR, newG, newB, newA)
+            currentColor = { newR, newG, newB }
+            SetColor(newR, newG, newB)
         end)
 
-        colorSwatch.SetDisabled = function(disable)
+        aceFrame.tooltipText = label
+        aceFrame.tooltipRequirement = description
+
+        colorLabel.colorPicker = colorPicker
+
+        colorPicker.SetDisabled = function(disable)
             if disable then
-                colorSwatch:Disable()
-                colorSwatch.texture:SetVertexColor(0.5, 0.5, 0.5) -- dim the color swatch
+                aceFrame:Disable()
                 colorLabel:SetFontObject("GameFontDisable")
             else
-                colorSwatch:Enable()
-                colorSwatch.texture:SetVertexColor(unpack(currentColor))
+                aceFrame:Enable()
                 colorLabel:SetFontObject("GameFontHighlight")
             end
         end
 
-        return colorLabel, colorSwatch
+        return colorLabel, aceFrame
     end
 
     local highColor = FpsLatencyMeterConfig.highColor
@@ -335,15 +323,7 @@ frame:SetScript("OnShow", function(frame)
         options.refreshSlider:SetValue(FpsLatencyMeterConfig.refreshInterval or 1)
         options.changeColor:SetChecked(FpsLatencyMeterConfig.changeColor)
 
-        options.highColorSwatch.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-        options.mediumColorSwatch.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-        options.lowColorSwatch.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-
-        if FpsLatencyMeterConfig.changeColor then
-            options.highColorSwatch.texture:SetVertexColor(unpack(FpsLatencyMeterConfig.highColor))
-            options.mediumColorSwatch.texture:SetVertexColor(unpack(FpsLatencyMeterConfig.mediumColor))
-            options.lowColorSwatch.texture:SetVertexColor(unpack(FpsLatencyMeterConfig.lowColor))
-        end
+        ResetColors(options)
     end
 
     frame.Refresh = function()

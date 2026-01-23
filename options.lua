@@ -350,18 +350,21 @@ frame:SetScript("OnShow", function(frame)
     end)
 end)
 
--- SLASH_FPSLATENCY1 = "/fps";
--- SLASH_FPSLATENCY2 = "/latency";
--- SLASH_FPSLATENCY3 = "/ms";
--- SlashCmdList["FPSLATENCY"] = function(msg)
---     local cmd = strlower(msg)
---     if (cmd == "reset") then
---         resetCfg()
---         if (frame:IsShown()) then
---             frame:Refresh()
---         end
---         print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Configuration has been reset to default.")
---     else
---         Settings.OpenToCategory(category.ID)
---     end
--- end
+if (clientBuildMajor < 49 or clientBuildMajor > 53) then -- or string.byte(clientVersionString, 2) ~= 46
+    return
+end
+SLASH_FPSLATENCY1 = "/fps";
+SLASH_FPSLATENCY2 = "/latency";
+SLASH_FPSLATENCY3 = "/ms";
+SlashCmdList["FPSLATENCY"] = function(msg)
+    local cmd = strlower(msg)
+    if (cmd == "reset") then
+        resetCfg()
+        if (frame:IsShown()) then
+            frame:Refresh()
+        end
+        print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Configuration has been reset to default.")
+    else
+        Settings.OpenToCategory(category.ID)
+    end
+end

@@ -5,6 +5,7 @@ local addOnTitle = GetAddOnMetadata(addOnName, "Title") or "FpsLatencyMeter"
 
 local clientVersionString = GetBuildInfo()
 local clientBuildMajor = string.byte(clientVersionString, 1)
+local majorVersion = tonumber(string.match(clientVersionString, "^(%d+)%.?%d*"))
 
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 
@@ -58,7 +59,6 @@ frame:Hide()
 
 -- Add to Blizzard settings
 local category = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name);
-category.ID = frame.name
 Settings.RegisterAddOnCategory(category);
 
 frame:SetScript("OnShow", function(frame)
@@ -353,7 +353,7 @@ end)
 SLASH_FPSLATENCY1 = "/fps";
 SLASH_FPSLATENCY2 = "/latency";
 SLASH_FPSLATENCY3 = "/ms";
-SlashCmdList["FPSLATENCY"] = function(msg)
+function SlashCmdList.FPSLATENCY(msg)
     local cmd = strlower(msg)
     if (cmd == "reset") then
         resetCfg()

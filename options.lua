@@ -155,11 +155,10 @@ frame.name = addOnTitle
 frame:Hide()
 
 -- Add to Blizzard settings
+local category = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name)
+Settings.RegisterAddOnCategory(category)
 -- local category = Settings.RegisterVerticalLayoutCategory(frame, frame.name, frame.name);
 -- Settings.RegisterAddOnCategory(category);
-
-local category = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name);
-Settings.RegisterAddOnCategory(category);
 
 frame:SetScript("OnShow", function(frame)
     -- local function Register()

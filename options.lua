@@ -8,6 +8,7 @@ local majorVersion = tonumber(string.match(clientVersionString, "^(%d+)%.?%d*"))
 
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 local SettingsLib = LibStub and LibStub("LibEQOLSettingsMode-1.0", true)
+local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
 
 _G[addOnName] = {}
 local TT = _G[addOnName]
@@ -20,13 +21,6 @@ function TT:IsClassic()
     return majorVersion <= 5 -- Up to MoP
 end
 
-local fonts = {
-    "Fonts\\FRIZQT__.TTF",
-    "Fonts\\ARIALN.TTF",
-    "Fonts\\MORPHEUS.TTF",
-    "Fonts\\SKURRI.TTF",
-}
-
 local FpsLatencyMeterBaseConfig = {
     fps = true,
     latency = true,
@@ -37,7 +31,7 @@ local FpsLatencyMeterBaseConfig = {
     highColor = { 0.90588218115667, 0.29803922772408, 0.23529413312476, 1 },
     mediumColor = { 0.94509810209274, 0.76862752437592, 0.058823533535519, 1 },
     lowColor = { 0.1803921610117, 0.80000007152557, 0.44313728809357, 1 },
-    fontPath = "Fonts\\FRIZQT__.TTF",
+    fontName = "Friz Quadrata TT",
     fontSize = 14,
     frameFpsX = -150,
     frameFpsY = 0,
@@ -56,7 +50,7 @@ FpsLatencyMeterConfig = FpsLatencyMeterConfig or {
     highColor = FpsLatencyMeterBaseConfig.highColor,
     mediumColor = FpsLatencyMeterBaseConfig.mediumColor,
     lowColor = FpsLatencyMeterBaseConfig.lowColor,
-    fontPath = FpsLatencyMeterBaseConfig.fontPath,
+    fontName = FpsLatencyMeterBaseConfig.fontName,
     fontSize = FpsLatencyMeterBaseConfig.fontSize,
     frameFpsX = FpsLatencyMeterBaseConfig.frameFpsX,
     frameFpsY = FpsLatencyMeterBaseConfig.frameFpsY,
@@ -66,7 +60,16 @@ FpsLatencyMeterConfig = FpsLatencyMeterConfig or {
     frameLatencyWorldY = FpsLatencyMeterBaseConfig.frameLatencyWorldY,
 }
 
-function TT:GetDefaults()
+function TT:ResetPositions()
+    FpsLatencyMeterConfig.frameFpsX = FpsLatencyMeterBaseConfig.frameFpsX
+    FpsLatencyMeterConfig.frameFpsY = FpsLatencyMeterBaseConfig.frameFpsY
+    FpsLatencyMeterConfig.frameLatencyHomeX = FpsLatencyMeterBaseConfig.frameLatencyHomeX
+    FpsLatencyMeterConfig.frameLatencyHomeY = FpsLatencyMeterBaseConfig.frameLatencyHomeY
+    FpsLatencyMeterConfig.frameLatencyWorldX = FpsLatencyMeterBaseConfig.frameLatencyWorldX
+    FpsLatencyMeterConfig.frameLatencyWorldY = FpsLatencyMeterBaseConfig.frameLatencyWorldY
+end
+
+function TT:ResetSettings()
     FpsLatencyMeterConfig.fps = FpsLatencyMeterBaseConfig.fps
     FpsLatencyMeterConfig.latency = FpsLatencyMeterBaseConfig.latency
     FpsLatencyMeterConfig.latencyHome = FpsLatencyMeterBaseConfig.latencyHome
@@ -76,14 +79,8 @@ function TT:GetDefaults()
     FpsLatencyMeterConfig.highColor = FpsLatencyMeterBaseConfig.highColor
     FpsLatencyMeterConfig.mediumColor = FpsLatencyMeterBaseConfig.mediumColor
     FpsLatencyMeterConfig.lowColor = FpsLatencyMeterBaseConfig.lowColor
-    FpsLatencyMeterConfig.fontPath = FpsLatencyMeterBaseConfig.fontPath
+    FpsLatencyMeterConfig.fontName = FpsLatencyMeterBaseConfig.fontName
     FpsLatencyMeterConfig.fontSize = FpsLatencyMeterBaseConfig.fontSize
-    FpsLatencyMeterConfig.frameFpsX = FpsLatencyMeterBaseConfig.frameFpsX
-    FpsLatencyMeterConfig.frameFpsY = FpsLatencyMeterBaseConfig.frameFpsY
-    FpsLatencyMeterConfig.frameLatencyHomeX = FpsLatencyMeterBaseConfig.frameLatencyHomeX
-    FpsLatencyMeterConfig.frameLatencyHomeY = FpsLatencyMeterBaseConfig.frameLatencyHomeY
-    FpsLatencyMeterConfig.frameLatencyWorldX = FpsLatencyMeterBaseConfig.frameLatencyWorldX
-    FpsLatencyMeterConfig.frameLatencyWorldY = FpsLatencyMeterBaseConfig.frameLatencyWorldY
 end
 
 local function ResetColors(options)
@@ -99,7 +96,7 @@ local function ResetColors(options)
 end
 
 local function ResetCfg(options)
-    TT:GetDefaults()
+    TT:ResetSettings()
     if options and TT:IsClassic() then
         ResetColors(options)
     end
@@ -114,14 +111,8 @@ local function ResetCfg(options)
             "highColor",
             "mediumColor",
             "lowColor",
-            "fontPath",
+            "fontName",
             "fontSize",
-            "frameFpsX",
-            "frameFpsY",
-            "frameLatencyHomeX",
-            "frameLatencyHomeY",
-            "frameLatencyWorldX",
-            "frameLatencyWorldY",
         }
         for _, variable in ipairs(settingsToUpdate) do
             Settings.NotifyUpdate(variable)
@@ -138,63 +129,134 @@ local frame = CreateFrame("Frame", addOnTitle)
 frame.name = addOnTitle
 frame:Hide()
 
-local minValueX = -4000
-local maxValueX = 4000
-local minValueY = -2000
-local maxValueY = 2000
+local function GetPositionLimits()
+    local screenWidth = GetScreenWidth()
+    local screenHeight = GetScreenHeight()
+
+    local xMultiplier = 2 -- How many screen widths to allow
+    local yMultiplier = 2 -- How many screen heights to allow
+
+    return {
+        minX = -screenWidth * xMultiplier,
+        maxX = screenWidth * xMultiplier,
+        minY = -screenHeight * yMultiplier,
+        maxY = screenHeight * yMultiplier
+    }
+end
+
+local limits = GetPositionLimits()
+local minValueX = limits.minX
+local maxValueX = limits.maxX
+local minValueY = limits.minY
+local maxValueY = limits.maxY
 
 if TT:IsRetail() then
-    local function OnSettingChanged(_, setting, value)
-        local variable = setting:GetVariable()
-        FpsLatencyMeterConfig[variable] = value
-        TT:UpdateFrames()
-    end
     local function Register()
         local category, layout = Settings.RegisterVerticalLayoutCategory(addOnTitle)
         Settings.FPS_LATENCY_CATEGORY_ID = category:GetID()
 
-        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Enable Features"))
+        -- Function to create a slider with a parent section
+        local function CreateParentedSlider(tbdb, tbvar, parentSection, prefix, key, name, default, min, max, step,
+                                            set, desc)
+            local initializer, setting = SettingsLib:CreateSlider(category, {
+                parentSection = parentSection,
+                prefix = prefix,
+                key = key,
+                name = name,
+                default = default,
+                min = min,
+                max = max,
+                step = step,
+                formatter = function(value)
+                    return string.format("%d", value)
+                end,
+                get = function()
+                    return tbdb[tbvar]
+                end,
+                set = function(value)
+                    value = tonumber(string.format("%d", value))
+                    tbdb[tbvar] = value
+                    if set then
+                        set()
+                    end
+                end,
+                desc = desc,
+            })
+            return initializer, setting
+        end
 
+        --------------------------------------------------------------------------------
+        -- HEADER SECTION
+        --------------------------------------------------------------------------------
+        SettingsLib:CreateHeader(category, {
+            name = "Version " .. addOnVersion,
+        })
+        SettingsLib:CreateText(category, {
+            name =
+            "Here, you can configure the settings of the |cff87bbcaFpsLatencyMeter|r addon.",
+        })
+        SettingsLib:CreateText(category, {
+            name =
+            "The |cff87bbcaFpsLatencyMeter|r addon is a simple addon that displays the FPS and the Latency of the player in the screen.",
+        })
+        SettingsLib:CreateText(category, {
+            name =
+            "The |cff87bbcaFpsLatencyMeter|r addon is free and open source, you can find the source code on |cff00ff00Github|r.",
+        })
+        SettingsLib:CreateText(category, {
+            name =
+            "If you have any questions or suggestions, please visit the |cff87bbcaFpsLatencyMeter|r addon page on |cff00ff00CurseForge|r.",
+        })
+
+        --------------------------------------------------------------------------------
+        -- REFRESH TIMER SECTION
+        --------------------------------------------------------------------------------
+        local refreshTimerSection = SettingsLib:CreateExpandableSection(category, {
+            name = "Refresh Timer",
+            expanded = true,
+            colorizeTitle = false,
+        })
+
+        do
+            local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "refreshInterval",
+                refreshTimerSection, "FPS_MS_", "fps_ms_refresh_timer", "Refresh Interval",
+                FpsLatencyMeterBaseConfig.refreshInterval, 1, 60, 1, TT:UpdateFrames(),
+                "How often the information should be updated")
+        end
+
+        --------------------------------------------------------------------------------
+        -- ENABLE FEATURES SECTION
+        --------------------------------------------------------------------------------
+        local enableFeaturesSection = SettingsLib:CreateExpandableSection(category, {
+            name = "Enable Features",
+            expanded = false,
+            colorizeTitle = false,
+        })
+
+        -- FPS
         local fpsSetting, fpsInitializer
         do
-            local name = "Show FPS"
-            local tooltip = "Shows FPS indicator"
-            local defaultValue = FpsLatencyMeterBaseConfig.fps
-            local variable = "fps"
-            local variableTbl = FpsLatencyMeterConfig
-
-            fpsSetting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl, type(defaultValue),
-                name, defaultValue)
-            Settings.SetOnValueChangedCallback(variable, OnSettingChanged)
-            fpsInitializer = Settings.CreateCheckbox(category, fpsSetting, tooltip)
+            fpsInitializer, fpsSetting = SettingsLib:CreateCheckbox(category, {
+                parentSection = enableFeaturesSection,
+                prefix = "FPS_",
+                key = "fps_show_text",
+                name = "Show FPS",
+                default = FpsLatencyMeterBaseConfig.fps,
+                get = function()
+                    return FpsLatencyMeterConfig.fps
+                end,
+                set = function(value)
+                    FpsLatencyMeterConfig.fps = value
+                    TT:UpdateFrames()
+                end,
+                desc = "Shows FPS indicator",
+            })
         end
 
         do
-            local name = "Position in X"
-            local tooltip = "Position of the text in X axis"
-            local defaultValue = FpsLatencyMeterBaseConfig.frameFpsX
-            local variable = "frameFpsX"
-            local variableTbl = FpsLatencyMeterConfig
-            local minValue = minValueX
-            local maxValue = maxValueX
-            local step = 1
-
-            local function GetValue()
-                return FpsLatencyMeterConfig.frameFpsX or defaultValue
-            end
-
-            local function SetValue(_, setting, value)
-                value = tonumber(string.format("%d", value))
-                OnSettingChanged(_, setting, value)
-            end
-
-            local setting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl, type(defaultValue),
-                name,
-                defaultValue, GetValue, SetValue)
-
-            local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-            options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
-            local initializer = Settings.CreateSlider(category, setting, options, tooltip)
+            local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameFpsX", enableFeaturesSection,
+                "FPS_", "fps_x_offset", "X Offset", FpsLatencyMeterBaseConfig.frameFpsX, minValueX, maxValueX, 1,
+                TT:UpdateFrames(), "Position of the text in X axis")
             initializer:AddShownPredicate(function() return fpsSetting:GetValue() end)
 
             local function IsSectionEnabled()
@@ -205,31 +267,9 @@ if TT:IsRetail() then
         end
 
         do
-            local name = "Position in Y"
-            local tooltip = "Position of the text in Y axis"
-            local defaultValue = FpsLatencyMeterBaseConfig.frameFpsY
-            local variable = "frameFpsY"
-            local variableTbl = FpsLatencyMeterConfig
-            local minValue = minValueY
-            local maxValue = maxValueY
-            local step = 1
-
-            local function GetValue()
-                return FpsLatencyMeterConfig.frameFpsY or defaultValue
-            end
-
-            local function SetValue(_, setting, value)
-                value = tonumber(string.format("%d", value))
-                OnSettingChanged(_, setting, value)
-            end
-
-            local setting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl, type(defaultValue),
-                name,
-                defaultValue, GetValue, SetValue)
-
-            local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-            options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
-            local initializer = Settings.CreateSlider(category, setting, options, tooltip)
+            local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameFpsY", enableFeaturesSection,
+                "FPS_", "fps_y_offset", "Y Offset", FpsLatencyMeterBaseConfig.frameFpsY, minValueY, maxValueY, 1,
+                TT:UpdateFrames(), "Position of the text in Y axis")
             initializer:AddShownPredicate(function() return fpsSetting:GetValue() end)
 
             local function IsSectionEnabled()
@@ -239,35 +279,44 @@ if TT:IsRetail() then
             initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
         end
 
+        -- Latency
         local latencySetting, latencyInitializer
         do
-            local name         = "Show Latency"
-            local tooltip      = "Shows MS indicators"
-            local defaultValue = FpsLatencyMeterBaseConfig.latency
-            local variable     = "latency"
-            local variableTbl  = FpsLatencyMeterConfig
-
-            latencySetting     = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl,
-                type(defaultValue),
-                name, defaultValue)
-            Settings.SetOnValueChangedCallback(variable, OnSettingChanged)
-            latencyInitializer = Settings.CreateCheckbox(category, latencySetting, tooltip)
+            latencyInitializer, latencySetting = SettingsLib:CreateCheckbox(category, {
+                parentSection = enableFeaturesSection,
+                prefix = "MS_",
+                key = "ms_show_text",
+                name = "Show MS",
+                default = FpsLatencyMeterBaseConfig.latency,
+                get = function()
+                    return FpsLatencyMeterConfig.latency
+                end,
+                set = function(value)
+                    FpsLatencyMeterConfig.latency = value
+                    TT:UpdateFrames()
+                end,
+                desc = "Shows MS indicators",
+            })
         end
 
+        -- Latency Home
         local latencyHomeSetting, latencyHomeInitializer
         do
-            local name = "Show Home MS"
-            local tooltip = "Shows MS (Home) indicator"
-            local defaultValue = FpsLatencyMeterBaseConfig.latencyHome
-            local variable = "latencyHome"
-            local variableTbl = FpsLatencyMeterConfig
-
-            latencyHomeSetting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl,
-                type(defaultValue),
-                name, defaultValue)
-            Settings.SetOnValueChangedCallback(variable, OnSettingChanged)
-
-            latencyHomeInitializer = Settings.CreateCheckbox(category, latencyHomeSetting, tooltip)
+            latencyHomeInitializer, latencyHomeSetting = SettingsLib:CreateCheckbox(category, {
+                parentSection = enableFeaturesSection,
+                prefix = "MS_",
+                key = "ms_home_show_text",
+                name = "Show Home MS",
+                default = FpsLatencyMeterBaseConfig.latencyHome,
+                get = function()
+                    return FpsLatencyMeterConfig.latencyHome
+                end,
+                set = function(value)
+                    FpsLatencyMeterConfig.latencyHome = value
+                    TT:UpdateFrames()
+                end,
+                desc = "Shows MS (Home) indicator",
+            })
             latencyHomeInitializer:AddShownPredicate(function() return latencySetting:GetValue() end)
 
             local function IsSectionEnabled()
@@ -279,31 +328,10 @@ if TT:IsRetail() then
         end
 
         do
-            local name = "Position in X"
-            local tooltip = "Position of the text in X axis"
-            local defaultValue = FpsLatencyMeterBaseConfig.frameLatencyHomeX
-            local variable = "frameLatencyHomeX"
-            local variableTbl = FpsLatencyMeterConfig
-            local minValue = minValueX
-            local maxValue = maxValueX
-            local step = 1
-
-            local function GetValue()
-                return FpsLatencyMeterConfig.frameLatencyHomeX or defaultValue
-            end
-
-            local function SetValue(_, setting, value)
-                value = tonumber(string.format("%d", value))
-                OnSettingChanged(_, setting, value)
-            end
-
-            local setting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl, type(defaultValue),
-                name,
-                defaultValue, GetValue, SetValue)
-
-            local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-            options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
-            local initializer = Settings.CreateSlider(category, setting, options, tooltip)
+            local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameLatencyHomeX",
+                enableFeaturesSection, "MS_", "ms_home_x_offset", "Home MS: X Offset",
+                FpsLatencyMeterBaseConfig.frameLatencyHomeX, minValueX, maxValueX, 1,
+                TT:UpdateFrames(), "Position of the text in X axis")
             initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyHomeSetting:GetValue() end)
 
             local function IsSectionEnabled()
@@ -315,31 +343,11 @@ if TT:IsRetail() then
         end
 
         do
-            local name = "Position in Y"
-            local tooltip = "Position of the text in Y axis"
-            local defaultValue = FpsLatencyMeterBaseConfig.frameLatencyHomeY
-            local variable = "frameLatencyHomeY"
-            local variableTbl = FpsLatencyMeterConfig
-            local minValue = minValueY
-            local maxValue = maxValueY
-            local step = 1
+            local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameLatencyHomeY",
+                enableFeaturesSection, "MS_", "ms_home_y_offset", "Home MS: Y Offset",
+                FpsLatencyMeterBaseConfig.frameLatencyHomeY, minValueY, maxValueY, 1,
+                TT:UpdateFrames(), "Position of the text in Y axis")
 
-            local function GetValue()
-                return FpsLatencyMeterConfig.frameLatencyHomeY or defaultValue
-            end
-
-            local function SetValue(_, setting, value)
-                value = tonumber(string.format("%d", value))
-                OnSettingChanged(_, setting, value)
-            end
-
-            local setting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl, type(defaultValue),
-                name,
-                defaultValue, GetValue, SetValue)
-
-            local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-            options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
-            local initializer = Settings.CreateSlider(category, setting, options, tooltip)
             initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyHomeSetting:GetValue() end)
 
             local function IsSectionEnabled()
@@ -350,19 +358,24 @@ if TT:IsRetail() then
                 latencyHomeInitializer.IsSectionEnabled or IsSectionEnabled)
         end
 
+        -- Latency World
         local latencyWorldSetting, latencyWorldInitializer
         do
-            local name = "Show World MS"
-            local tooltip = "Shows MS (World) indicator"
-            local defaultValue = FpsLatencyMeterBaseConfig.latencyWorld
-            local variable = "latencyWorld"
-            local variableTbl = FpsLatencyMeterConfig
-
-            latencyWorldSetting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl,
-                type(defaultValue), name, defaultValue)
-            Settings.SetOnValueChangedCallback(variable, OnSettingChanged)
-
-            latencyWorldInitializer = Settings.CreateCheckbox(category, latencyWorldSetting, tooltip)
+            latencyWorldInitializer, latencyWorldSetting = SettingsLib:CreateCheckbox(category, {
+                parentSection = enableFeaturesSection,
+                prefix = "MS_",
+                key = "ms_world_show_text",
+                name = "Show World MS",
+                default = FpsLatencyMeterBaseConfig.latencyWorld,
+                get = function()
+                    return FpsLatencyMeterConfig.latencyWorld
+                end,
+                set = function(value)
+                    FpsLatencyMeterConfig.latencyWorld = value
+                    TT:UpdateFrames()
+                end,
+                desc = "Shows MS (World) indicator",
+            })
             latencyWorldInitializer:AddShownPredicate(function() return latencySetting:GetValue() end)
 
             local function IsSectionEnabled()
@@ -374,30 +387,10 @@ if TT:IsRetail() then
         end
 
         do
-            local name = "Position in X"
-            local tooltip = "Position of the text in X axis"
-            local defaultValue = FpsLatencyMeterBaseConfig.frameLatencyWorldX
-            local variable = "frameLatencyWorldX"
-            local variableTbl = FpsLatencyMeterConfig
-            local minValue = minValueX
-            local maxValue = maxValueX
-            local step = 1
-
-            local function GetValue()
-                return FpsLatencyMeterConfig.frameLatencyWorldX or defaultValue
-            end
-
-            local function SetValue(_, setting, value)
-                value = tonumber(string.format("%d", value))
-                OnSettingChanged(_, setting, value)
-            end
-
-            local setting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl, type(defaultValue),
-                name, defaultValue, GetValue, SetValue)
-
-            local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-            options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
-            local initializer = Settings.CreateSlider(category, setting, options, tooltip)
+            local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameLatencyWorldX",
+                enableFeaturesSection, "MS_", "ms_world_x_offset", "World MS: X Offset",
+                FpsLatencyMeterBaseConfig.frameLatencyWorldX, minValueX, maxValueX, 1,
+                TT:UpdateFrames(), "Position of the text in X axis")
             initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
 
             local function IsSectionEnabled()
@@ -409,31 +402,10 @@ if TT:IsRetail() then
         end
 
         do
-            local name = "Position in Y"
-            local tooltip = "Position of the text in Y axis"
-            local defaultValue = FpsLatencyMeterBaseConfig.frameLatencyWorldY
-            local variable = "frameLatencyWorldY"
-            local variableTbl = FpsLatencyMeterConfig
-            local minValue = minValueY
-            local maxValue = maxValueY
-            local step = 1
-
-            local function GetValue()
-                return FpsLatencyMeterConfig.frameLatencyWorldY or defaultValue
-            end
-
-            local function SetValue(_, setting, value)
-                value = tonumber(string.format("%d", value))
-                OnSettingChanged(_, setting, value)
-            end
-
-            local setting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl, type(defaultValue),
-                name,
-                defaultValue, GetValue, SetValue)
-
-            local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-            options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
-            local initializer = Settings.CreateSlider(category, setting, options, tooltip)
+            local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameLatencyWorldY",
+                enableFeaturesSection, "MS_", "ms_world_y_offset", "World MS: Y Offset",
+                FpsLatencyMeterBaseConfig.frameLatencyWorldY, minValueY, maxValueY, 1,
+                TT:UpdateFrames(), "Position of the text in Y axis")
             initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
 
             local function IsSectionEnabled()
@@ -444,53 +416,111 @@ if TT:IsRetail() then
                 latencyWorldInitializer.IsSectionEnabled or IsSectionEnabled)
         end
 
-        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Refresh Timer"))
+        --------------------------------------------------------------------------------
+        -- OTHER OPTIONS SECTION
+        --------------------------------------------------------------------------------
+        local otherSection = SettingsLib:CreateExpandableSection(category, {
+            name = "Other options",
+            expanded = false,
+            colorizeTitle = false,
+        })
 
+        -- Font dropdown
         do
-            local name = "Refresh Interval"
-            local tooltip = "How often the information should be updated"
-            local defaultValue = FpsLatencyMeterBaseConfig.refreshInterval
-            local variable = "refreshInterval"
-            local variableTbl = FpsLatencyMeterConfig
-            local minValue = 1
-            local maxValue = 60
-            local step = 1
+            SettingsLib:CreateScrollDropdown(category, {
+                parentSection = otherSection,
+                prefix = "FPS_MS_",
+                key = "fps_ms_font_name",
+                name = "Font",
+                default = FpsLatencyMeterBaseConfig.fontName,
+                height = 220,
+                get = function()
+                    return FpsLatencyMeterConfig.fontName
+                end,
+                set = function(value)
+                    FpsLatencyMeterConfig.fontName = value
+                    TT:UpdateFrames()
+                end,
+                desc = "Select the font for the text to be displayed",
+                generator = function(dropdown, rootDescription)
+                    dropdown.fontPool = {}
+                    if not dropdown._FPS_MS_FontFace_Dropdown_OnMenuClosed_hooked then
+                        hooksecurefunc(dropdown, "OnMenuClosed", function()
+                            for _, fontDisplay in pairs(dropdown.fontPool) do
+                                fontDisplay:Hide()
+                            end
+                        end)
+                        dropdown._FPS_MS_FontFace_Dropdown_OnMenuClosed_hooked = true
+                    end
+                    local fonts = LSM:HashTable(LSM.MediaType.FONT)
+                    local sortedFonts = {}
+                    for fontName in pairs(fonts) do
+                        if fontName ~= "" then
+                            table.insert(sortedFonts, fontName)
+                        end
+                    end
+                    table.sort(sortedFonts)
 
-            local function GetValue()
-                return FpsLatencyMeterBaseConfig.refreshInterval or defaultValue
-            end
+                    for index, fontName in ipairs(sortedFonts) do
+                        local fontPath = fonts[fontName]
 
-            local function SetValue(_, setting, value)
-                value = tonumber(string.format("%d", value))
-                OnSettingChanged(_, setting, value)
-            end
+                        local button = rootDescription:CreateRadio(fontName, function()
+                            return FpsLatencyMeterConfig.fontName == fontName
+                        end, function()
+                            FpsLatencyMeterConfig.fontName = fontName
+                            TT:UpdateFrames()
+                            dropdown:SetText(fontName)
+                        end)
 
-            local setting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl, type(defaultValue),
-                name,
-                defaultValue, GetValue, SetValue)
+                        button:AddInitializer(function(self)
+                            local fontDisplay = dropdown.fontPool[index]
+                            if not fontDisplay then
+                                fontDisplay = dropdown:CreateFontString(nil, "BACKGROUND")
+                                dropdown.fontPool[index] = fontDisplay
+                            end
 
-            local options = Settings.CreateSliderOptions(minValue, maxValue, step)
-            options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
-            Settings.CreateSlider(category, setting, options, tooltip)
+                            self.fontString:Hide()
+
+                            fontDisplay:SetParent(self)
+                            fontDisplay:SetPoint("LEFT", self.fontString, "LEFT", 0, 0)
+                            fontDisplay:SetFont(fontPath, 12)
+                            fontDisplay:SetText(fontName)
+                            fontDisplay:Show()
+                        end)
+                    end
+                end,
+            })
         end
 
-        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Text Colors"))
+        -- Font size
+        do
+            local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "fontSize",
+                otherSection, "FPS_MS_", "fps_ms_font_size", "Font Size",
+                FpsLatencyMeterBaseConfig.fontSize, 8, 50, 1, TT:UpdateFrames(),
+                "The font size of the text to be displayed")
+        end
 
+        -- Changing Color checkbox
         local changeColorSetting, colorPickersSetting
         do
-            local name = "Changing Color"
-            local tooltip = "Changes the color according to the selected one below"
-            local defaultValue = FpsLatencyMeterBaseConfig.changeColor
-            local variable = "changeColor"
-            local variableTbl = FpsLatencyMeterConfig
-
-            changeColorSetting = Settings.RegisterAddOnSetting(category, variable, variable, variableTbl,
-                type(defaultValue),
-                name, defaultValue)
-            Settings.SetOnValueChangedCallback(variable, OnSettingChanged)
-            Settings.CreateCheckbox(category, changeColorSetting, tooltip)
+            colorPickersSetting, changeColorSetting = SettingsLib:CreateCheckbox(category, {
+                parentSection = otherSection,
+                prefix = "FPS_MS_",
+                key = "fps_ms_show_colors",
+                name = "Changing Color",
+                default = FpsLatencyMeterBaseConfig.changeColor,
+                get = function()
+                    return FpsLatencyMeterConfig.changeColor
+                end,
+                set = function(value)
+                    FpsLatencyMeterConfig.changeColor = value
+                    TT:UpdateFrames()
+                end,
+                desc = "Changes the color according to the selected one below",
+            })
         end
 
+        -- Color pickers
         local colorData = {
             {
                 label = "High Color (<15fps, >200ms)",
@@ -507,6 +537,8 @@ if TT:IsRetail() then
         }
         do
             colorPickersSetting = SettingsLib:CreateColorOverrides(category, {
+                parentSection = otherSection,
+                prefix = "FPS_MS_",
                 entries = colorData,
                 hasOpacity = false,
                 getColor = function(key)
@@ -844,16 +876,61 @@ hooksecurefunc(SettingsPanel, "DisplayCategory", function(self, category)
     if TT:IsRetail() then
         local header = SettingsPanel.Container.SettingsList.Header
         if category:GetID() == Settings.FPS_LATENCY_CATEGORY_ID then
-            if not header.FpsLatencyMeter_Version then
-                header.FpsLatencyMeter_Version = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
-                header.FpsLatencyMeter_Version:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -10, 0)
-                header.FpsLatencyMeter_Version:SetSize(header.DefaultsButton:GetSize())
-                header.FpsLatencyMeter_Version:SetText("v" .. addOnVersion)
+            if not header.FpsLatencyMeter_ResetPositions then
+                header.FpsLatencyMeter_ResetPositions = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
+                header.FpsLatencyMeter_ResetPositions:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -10, 0)
+                header.FpsLatencyMeter_ResetPositions:SetSize(header.DefaultsButton:GetSize())
+                header.FpsLatencyMeter_ResetPositions:SetText("Reset Positions")
+                header.FpsLatencyMeter_ResetPositions:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+                    GameTooltip:ClearLines()
+                    GameTooltip:SetText("Resets all positions to default")
+                    GameTooltip:Show()
+                end)
+                header.FpsLatencyMeter_ResetPositions:SetScript("OnLeave", function(self)
+                    GameTooltip:Hide()
+                end)
+                header.FpsLatencyMeter_ResetPositions:SetScript("OnClick", function()
+                    SettingsPanel:Hide()
+                    TT:ResetPositions()
+                end)
             end
-            header.FpsLatencyMeter_Version:Show()
+            if not header.FpsLatencyMeter_ResetSettings then
+                header.FpsLatencyMeter_ResetSettings = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
+                header.FpsLatencyMeter_ResetSettings:SetPoint("LEFT", header.DefaultsButton, "LEFT", 0, 0)
+                header.FpsLatencyMeter_ResetSettings:SetSize(header.DefaultsButton:GetSize())
+                header.FpsLatencyMeter_ResetSettings:SetText("Reset Settings")
+                header.FpsLatencyMeter_ResetSettings:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+                    GameTooltip:ClearLines()
+                    GameTooltip:SetText("Resets all settings to default (except positions)")
+                    GameTooltip:Show()
+                end)
+                header.FpsLatencyMeter_ResetSettings:SetScript("OnLeave", function(self)
+                    GameTooltip:Hide()
+                end)
+                header.FpsLatencyMeter_ResetSettings:SetScript("OnClick", function()
+                    SettingsPanel:Hide()
+                    ResetCfg()
+                    -- ReloadUI()
+                end)
+            end
+
+            header.FpsLatencyMeter_ResetPositions:Show()
+            header.FpsLatencyMeter_ResetSettings:Show()
+
+            if header.DefaultsButton:IsShown() then
+                header.DefaultsButton:Hide()
+            end
         else
-            if header.FpsLatencyMeter_Version then
-                header.FpsLatencyMeter_Version:Hide()
+            if header.FpsLatencyMeter_ResetPositions then
+                header.FpsLatencyMeter_ResetPositions:Hide()
+            end
+            if header.FpsLatencyMeter_ResetSettings then
+                header.FpsLatencyMeter_ResetSettings:Hide()
+            end
+            if not header.DefaultsButton:IsShown() then
+                header.DefaultsButton:Show()
             end
         end
     end

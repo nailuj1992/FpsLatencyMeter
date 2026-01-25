@@ -22,7 +22,7 @@ textWorldMS:SetPoint("CENTER", UIParent, "CENTER", FpsLatencyMeterConfig.frameLa
 textWorldMS:SetTextColor(1, 1, 1)
 textWorldMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
-local function ToWoWColorCode(r, g, b, a)
+function TT:ToWoWColorCode(r, g, b, a)
     return string.format("|cFF%02X%02X%02X", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
 end
 
@@ -35,7 +35,7 @@ local function GetColorCodeFps(fps)
     else
         colorValue = FpsLatencyMeterConfig.lowColor
     end
-    return ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3], colorValue[4] or 1)
+    return TT:ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3], colorValue[4] or 1)
 end
 
 local function GetColorCodeMs(ms)
@@ -47,7 +47,7 @@ local function GetColorCodeMs(ms)
     else
         colorValue = FpsLatencyMeterConfig.lowColor
     end
-    return ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3], colorValue[4] or 1), colorValue[4] or 1
+    return TT:ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3], colorValue[4] or 1), colorValue[4] or 1
 end
 
 UIParent:SetScript("OnUpdate", function(self, elapsed)

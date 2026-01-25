@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
-    <Frame name="LibEQOLdceaa1f_SettingsListSectionHintTemplate" mixin="SettingsListSectionHeaderMixin" virtual="true">
+    <Frame name="LibEQOL@project-abbreviated-hash@_SettingsListSectionHintTemplate" mixin="SettingsListSectionHeaderMixin" virtual="true">
         <Size x="30" y="29"/>
         <Layers>
         <Layer level="OVERLAY">
@@ -23,7 +23,7 @@
         </Scripts>
     </Frame>
 
-     <Button name="LibEQOLdceaa1f_MultiDropdownTemplate"
+     <Button name="LibEQOL@project-abbreviated-hash@_MultiDropdownTemplate"
         virtual="true"
         inherits="SettingsDropdownControlTemplate"
         mixin="LibEQOL_MultiDropdownMixin">
@@ -40,13 +40,13 @@
         </Layers>
     </Button>
 
-    <Button name="LibEQOLdceaa1f_ScrollDropdownTemplate"
+    <Button name="LibEQOL@project-abbreviated-hash@_ScrollDropdownTemplate"
         virtual="true"
         inherits="SettingsDropdownControlTemplate"
         mixin="LibEQOL_ScrollDropdownMixin">
     </Button>
 
-    <Frame name="LibEQOLdceaa1f_ColorOverridesPanel" mixin="LibEQOL_ColorOverridesMixin" virtual="true">
+    <Frame name="LibEQOL@project-abbreviated-hash@_ColorOverridesPanel" mixin="LibEQOL_ColorOverridesMixin" virtual="true">
 		<Size x="200" y="60"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -78,7 +78,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="LibEQOLdceaa1f_ColorOverridesPanelNoHead" 
+	<Frame name="LibEQOL@project-abbreviated-hash@_ColorOverridesPanelNoHead" 
 		mixin="LibEQOL_ColorOverridesMixin" 
 		inherits="SettingsListElementTemplate"
 		virtual="true"
@@ -114,7 +114,7 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="LibEQOLdceaa1f_SoundDropdownTemplate"
+	<Frame name="LibEQOL@project-abbreviated-hash@_SoundDropdownTemplate"
 		inherits="SettingsListElementTemplate"
 		mixin="LibEQOL_SoundDropdownMixin"
 		virtual="true"

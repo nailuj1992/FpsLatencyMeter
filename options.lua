@@ -4,364 +4,640 @@ local addOnVersion = GetAddOnMetadata(addOnName, "Version") or "0.0.1"
 local addOnTitle = GetAddOnMetadata(addOnName, "Title") or "FpsLatencyMeter"
 
 local clientVersionString = GetBuildInfo()
-local clientBuildMajor = string.byte(clientVersionString, 1)
 local majorVersion = tonumber(string.match(clientVersionString, "^(%d+)%.?%d*"))
 
-local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
+local SettingsLib = LibStub and LibStub("LibEQOLSettingsMode-1.0", true)
+local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
 
 _G[addOnName] = {}
 local TT = _G[addOnName]
 
-function TT:GetDefaults()
-    return {
-        fps = true,
-        latency = true,
-        latencyHome = true,
-        latencyWorld = true,
-        refreshInterval = 1,
-        changeColor = true,
-        highColor = { 0.90588218115667, 0.29803922772408, 0.23529413312476 },
-        mediumColor = { 0.94509810209274, 0.76862752437592, 0.058823533535519 },
-        lowColor = { 0.1803921610117, 0.80000007152557, 0.44313728809357 },
-        framePoint = "CENTER",
-        frameX = -610,
-        frameY = -532,
+function TT:IsRetail()
+    return majorVersion >= 12 -- Midnight
+end
+
+local FpsLatencyMeterBaseConfig = {
+    fps = true,
+    latency = true,
+    latencyHome = true,
+    latencyWorld = true,
+    refreshInterval = 1,
+    changeColor = true,
+    highColor = { 0.90588218115667, 0.29803922772408, 0.23529413312476, 1 },
+    mediumColor = { 0.94509810209274, 0.76862752437592, 0.058823533535519, 1 },
+    lowColor = { 0.1803921610117, 0.80000007152557, 0.44313728809357, 1 },
+    fontName = "Friz Quadrata TT",
+    fontSize = 14,
+    frameFpsX = -150,
+    frameFpsY = 0,
+    frameLatencyHomeX = 0,
+    frameLatencyHomeY = 0,
+    frameLatencyWorldX = 170,
+    frameLatencyWorldY = 0,
+}
+FpsLatencyMeterConfig = FpsLatencyMeterConfig or {
+    fps = FpsLatencyMeterBaseConfig.fps,
+    latency = FpsLatencyMeterBaseConfig.latency,
+    latencyHome = FpsLatencyMeterBaseConfig.latencyHome,
+    latencyWorld = FpsLatencyMeterBaseConfig.latencyWorld,
+    refreshInterval = FpsLatencyMeterBaseConfig.refreshInterval,
+    changeColor = FpsLatencyMeterBaseConfig.changeColor,
+    highColor = FpsLatencyMeterBaseConfig.highColor,
+    mediumColor = FpsLatencyMeterBaseConfig.mediumColor,
+    lowColor = FpsLatencyMeterBaseConfig.lowColor,
+    fontName = FpsLatencyMeterBaseConfig.fontName,
+    fontSize = FpsLatencyMeterBaseConfig.fontSize,
+    frameFpsX = FpsLatencyMeterBaseConfig.frameFpsX,
+    frameFpsY = FpsLatencyMeterBaseConfig.frameFpsY,
+    frameLatencyHomeX = FpsLatencyMeterBaseConfig.frameLatencyHomeX,
+    frameLatencyHomeY = FpsLatencyMeterBaseConfig.frameLatencyHomeY,
+    frameLatencyWorldX = FpsLatencyMeterBaseConfig.frameLatencyWorldX,
+    frameLatencyWorldY = FpsLatencyMeterBaseConfig.frameLatencyWorldY,
+}
+
+function TT:ResetPositions()
+    FpsLatencyMeterConfig.frameFpsX = FpsLatencyMeterBaseConfig.frameFpsX
+    FpsLatencyMeterConfig.frameFpsY = FpsLatencyMeterBaseConfig.frameFpsY
+    FpsLatencyMeterConfig.frameLatencyHomeX = FpsLatencyMeterBaseConfig.frameLatencyHomeX
+    FpsLatencyMeterConfig.frameLatencyHomeY = FpsLatencyMeterBaseConfig.frameLatencyHomeY
+    FpsLatencyMeterConfig.frameLatencyWorldX = FpsLatencyMeterBaseConfig.frameLatencyWorldX
+    FpsLatencyMeterConfig.frameLatencyWorldY = FpsLatencyMeterBaseConfig.frameLatencyWorldY
+end
+
+function TT:ResetSettings()
+    FpsLatencyMeterConfig.fps = FpsLatencyMeterBaseConfig.fps
+    FpsLatencyMeterConfig.latency = FpsLatencyMeterBaseConfig.latency
+    FpsLatencyMeterConfig.latencyHome = FpsLatencyMeterBaseConfig.latencyHome
+    FpsLatencyMeterConfig.latencyWorld = FpsLatencyMeterBaseConfig.latencyWorld
+    FpsLatencyMeterConfig.refreshInterval = FpsLatencyMeterBaseConfig.refreshInterval
+    FpsLatencyMeterConfig.changeColor = FpsLatencyMeterBaseConfig.changeColor
+    FpsLatencyMeterConfig.highColor = FpsLatencyMeterBaseConfig.highColor
+    FpsLatencyMeterConfig.mediumColor = FpsLatencyMeterBaseConfig.mediumColor
+    FpsLatencyMeterConfig.lowColor = FpsLatencyMeterBaseConfig.lowColor
+    FpsLatencyMeterConfig.fontName = FpsLatencyMeterBaseConfig.fontName
+    FpsLatencyMeterConfig.fontSize = FpsLatencyMeterBaseConfig.fontSize
+end
+
+local function ResetCfg()
+    TT:ResetSettings()
+    local settingsToUpdate = {
+        "fps",
+        "latency",
+        "latencyHome",
+        "latencyWorld",
+        "refreshInterval",
+        "changeColor",
+        "highColor",
+        "mediumColor",
+        "lowColor",
+        "fontName",
+        "fontSize",
     }
-end
-
-local function ResetColors(options)
-    options.highColorLabel.colorPicker.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-    options.mediumColorLabel.colorPicker.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-    options.lowColorLabel.colorPicker.SetDisabled(not FpsLatencyMeterConfig.changeColor)
-
-    if FpsLatencyMeterConfig.changeColor then
-        options.highColorLabel.colorPicker:SetColor(unpack(FpsLatencyMeterConfig.highColor))
-        options.mediumColorLabel.colorPicker:SetColor(unpack(FpsLatencyMeterConfig.mediumColor))
-        options.lowColorLabel.colorPicker:SetColor(unpack(FpsLatencyMeterConfig.lowColor))
-    end
-end
-
-local function resetCfg(options)
-    FpsLatencyMeterConfig = TT:GetDefaults()
-    if options then
-        ResetColors(options)
+    for _, variable in ipairs(settingsToUpdate) do
+        Settings.NotifyUpdate(variable)
     end
 end
 
 if not FpsLatencyMeterConfig then
-    resetCfg()
+    ResetCfg()
 end
 
--- main frame
-local frame = CreateFrame("Frame", "Fps Latency Meter Options")
-frame.name = addOnTitle
-frame:Hide()
+local function GetPositionLimits()
+    local screenWidth = GetScreenWidth()
+    local screenHeight = GetScreenHeight()
 
--- Add to Blizzard settings
-local category = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name);
-Settings.RegisterAddOnCategory(category);
+    local xMultiplier = 2 -- How many screen widths to allow
+    local yMultiplier = 2 -- How many screen heights to allow
 
-frame:SetScript("OnShow", function(frame)
-    local options = {}
-    local title = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText(addOnTitle .. " v" .. addOnVersion)
+    return {
+        minX = -screenWidth * xMultiplier,
+        maxX = screenWidth * xMultiplier,
+        minY = -screenHeight * yMultiplier,
+        maxY = screenHeight * yMultiplier
+    }
+end
 
-    local function newCheckbox(name, label, description, onClick)
-        local check = CreateFrame("CheckButton", "FpsLatencyOptCheckBox" .. name, frame,
-            "InterfaceOptionsCheckButtonTemplate")
-        check:SetScript("OnClick", function(self)
-            local tick = self:GetChecked()
-            onClick(self, tick and true or false)
-        end)
-        check.SetDisabled = function(self, disable)
-            if disable then
-                self:Disable()
-                _G[self:GetName() .. 'Text']:SetFontObject('GameFontDisable')
-            else
-                self:Enable()
-                _G[self:GetName() .. 'Text']:SetFontObject('GameFontHighlight')
-            end
-        end
-        check.label = _G[check:GetName() .. "Text"]
-        check.label:SetText(label)
-        if (description) then
-            check.tooltipText = label
-            check.tooltipRequirement = description
-        end
-        return check
+local limits = GetPositionLimits()
+local minValueX = limits.minX
+local maxValueX = limits.maxX
+local minValueY = limits.minY
+local maxValueY = limits.maxY
+
+local function Register()
+    local category, layout = Settings.RegisterVerticalLayoutCategory(addOnTitle)
+    Settings.FPS_LATENCY_CATEGORY_ID = category:GetID()
+
+    -- Function to create a slider with a parent section
+    local function CreateParentedSlider(tbdb, tbvar, parentSection, prefix, key, name, default, min, max, step,
+                                        set, desc)
+        local initializer, setting = SettingsLib:CreateSlider(category, {
+            parentSection = parentSection,
+            prefix = prefix,
+            key = key,
+            name = name,
+            default = default,
+            min = min,
+            max = max,
+            step = step,
+            formatter = function(value)
+                return string.format("%d", value)
+            end,
+            get = function()
+                return tbdb[tbvar]
+            end,
+            set = function(value)
+                value = tonumber(string.format("%d", value))
+                tbdb[tbvar] = value
+                if set then
+                    set()
+                end
+            end,
+            desc = desc,
+        })
+        return initializer, setting
     end
 
-    local function newSlider(name, label, minValue, maxValue, isVertical, onValueChanged)
-        local slider = CreateFrame("Slider", "FpsLatencySlider" .. name, frame, "OptionsSliderTemplate")
-        slider:SetMinMaxValues(minValue, maxValue)
-        slider:SetValueStep(1)
-        slider:SetObeyStepOnDrag(true)
+    --------------------------------------------------------------------------------
+    -- HEADER SECTION
+    --------------------------------------------------------------------------------
+    SettingsLib:CreateHeader(category, {
+        name = "Version " .. addOnVersion,
+    })
+    SettingsLib:CreateText(category, {
+        name =
+        "Here, you can configure the settings of the |cff87bbcaFpsLatencyMeter|r addon.",
+    })
+    SettingsLib:CreateText(category, {
+        name =
+        "The |cff87bbcaFpsLatencyMeter|r addon is a simple addon that displays the FPS and the Latency of the player in the screen.",
+    })
+    SettingsLib:CreateText(category, {
+        name =
+        "The |cff87bbcaFpsLatencyMeter|r addon is free and open source, you can find the source code on |cff00ff00Github|r.",
+    })
+    SettingsLib:CreateText(category, {
+        name =
+        "If you have any questions or suggestions, please visit the |cff87bbcaFpsLatencyMeter|r addon page on |cff00ff00CurseForge|r.",
+    })
 
-        _G[slider:GetName() .. 'Low']:SetText(string.format("%s", minValue))
-        _G[slider:GetName() .. 'High']:SetText(string.format("%s", maxValue))
-        _G[slider:GetName() .. 'Text']:SetText(label)
+    --------------------------------------------------------------------------------
+    -- REFRESH TIMER SECTION
+    --------------------------------------------------------------------------------
+    local refreshTimerSection = SettingsLib:CreateExpandableSection(category, {
+        name = "Refresh Timer",
+        expanded = true,
+        colorizeTitle = false,
+    })
 
-        if isVertical then
-            slider:SetOrientation("VERTICAL")
-
-            -- Position high at the top of the slider
-            _G[slider:GetName() .. 'Low']:ClearAllPoints()
-            _G[slider:GetName() .. 'Low']:SetPoint("TOP", slider, "TOP", 0, 0)
-
-            -- Position low at the bottom of the slider
-            _G[slider:GetName() .. 'High']:ClearAllPoints()
-            _G[slider:GetName() .. 'High']:SetPoint("BOTTOM", slider, "BOTTOM", 0, 0)
-
-            -- Position label text to the right of the slider, centered vertically
-            _G[slider:GetName() .. 'Text']:ClearAllPoints()
-            _G[slider:GetName() .. 'Text']:SetPoint("RIGHT", slider, "LEFT", -10, 0)
-        end
-
-        slider:SetScript("OnValueChanged", onValueChanged)
-
-        slider.SetDisabled = function(self, disable)
-            if disable then
-                self:Disable()
-                _G[self:GetName() .. 'Text']:SetFontObject('GameFontDisable')
-            else
-                self:Enable()
-                _G[self:GetName() .. 'Text']:SetFontObject('GameFontHighlight')
-            end
-        end
-
-        return slider
+    do
+        local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "refreshInterval",
+            refreshTimerSection, "FPS_MS_", "fps_ms_refresh_timer", "Refresh Interval",
+            FpsLatencyMeterBaseConfig.refreshInterval, 1, 60, 1, TT:UpdateFrames(),
+            "How often the information should be updated")
     end
 
-    local displaySettings = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    displaySettings:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -20)
-    displaySettings:SetText("Display Settings")
+    --------------------------------------------------------------------------------
+    -- ENABLE FEATURES SECTION
+    --------------------------------------------------------------------------------
+    local enableFeaturesSection = SettingsLib:CreateExpandableSection(category, {
+        name = "Enable Features",
+        expanded = false,
+        colorizeTitle = false,
+    })
 
-    options.showFps = newCheckbox("ShowFps", "Show FPS", "Shows FPS indicator",
-        function(self, value)
-            FpsLatencyMeterConfig.fps = value
-            TT:UpdateFrames()
-        end)
-    options.showFps:SetPoint("TOPLEFT", displaySettings, "BOTTOMLEFT", 0, -10)
+    -- FPS
+    local fpsSetting, fpsInitializer
+    do
+        fpsInitializer, fpsSetting = SettingsLib:CreateCheckbox(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "FPS_",
+            key = "fps_show_text",
+            name = "Show FPS",
+            default = FpsLatencyMeterBaseConfig.fps,
+            get = function()
+                return FpsLatencyMeterConfig.fps
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.fps = value
+                TT:UpdateFrames()
+            end,
+            desc = "Shows FPS indicator",
+        })
+    end
 
-    options.showLatency = newCheckbox("ShowLatency", "Show Latency", "Shows MS indicators",
-        function(self, value)
-            FpsLatencyMeterConfig.latency = value
-            options.showHomeLatency:SetDisabled(not value)
-            options.showWorldLatency:SetDisabled(not value)
-            TT:UpdateFrames()
-        end)
-    options.showLatency:SetPoint("TOPLEFT", displaySettings, "BOTTOMLEFT", 140, -10)
+    do
+        local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameFpsX", enableFeaturesSection,
+            "FPS_", "fps_x_offset", "X Offset", FpsLatencyMeterBaseConfig.frameFpsX, minValueX, maxValueX, 1,
+            TT:UpdateFrames(), "Position of the text in X axis")
+        initializer:AddShownPredicate(function() return fpsSetting:GetValue() end)
 
-    options.showHomeLatency = newCheckbox("ShowHomeLatency", "Show Home MS", "Shows MS (Home) indicator",
-        function(self, value)
-            FpsLatencyMeterConfig.latencyHome = value
-            TT:UpdateFrames()
-        end)
-    options.showHomeLatency:SetPoint("TOPLEFT", displaySettings, "BOTTOMLEFT", 280, -10)
-
-    options.showWorldLatency = newCheckbox("ShowWorldLatency", "Show World MS", "Shows MS (World) indicator",
-        function(self, value)
-            FpsLatencyMeterConfig.latencyWorld = value
-            TT:UpdateFrames()
-        end)
-    options.showWorldLatency:SetPoint("TOPLEFT", displaySettings, "BOTTOMLEFT", 420, -10)
-
-    local positionFrame = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    positionFrame:SetPoint("TOPLEFT", displaySettings, "BOTTOMLEFT", 300, -60)
-    positionFrame:SetText("Position Settings")
-
-    options.positionX = newSlider("PositionX", "Frame Position in X", -1200, 1200, false,
-        function(self, value)
-            value = tonumber(string.format("%d", value))
-            FpsLatencyMeterConfig.frameX = value
-            _G[self:GetName() .. 'Text']:SetText("Frame Position in X: " .. value)
-            TT:UpdateFrames()
-        end)
-    options.positionX:SetWidth(250)
-    options.positionX:SetHeight(15)
-    options.positionX:SetPoint("TOPLEFT", positionFrame, "BOTTOMLEFT", 0, -30)
-
-    options.positionY = newSlider("PositionY", "Frame Position in Y", -700, 700, false,
-        function(self, value)
-            value = tonumber(string.format("%d", value))
-            FpsLatencyMeterConfig.frameY = value
-            _G[self:GetName() .. 'Text']:SetText("Frame Position in Y: " .. value)
-            TT:UpdateFrames()
-        end)
-    options.positionY:SetWidth(250)
-    options.positionY:SetHeight(15)
-    options.positionY:SetPoint("TOPLEFT", positionFrame, "BOTTOMLEFT", 0, -95)
-
-    local refreshTimer = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    refreshTimer:SetPoint("TOPLEFT", displaySettings, "BOTTOMLEFT", 0, -60)
-    refreshTimer:SetText("Refresh Timer")
-
-    options.refreshSlider = newSlider("RefreshInterval", "Refresh Interval", 1, 60, false,
-        function(self, value)
-            value = tonumber(string.format("%d", value))
-            FpsLatencyMeterConfig.refreshInterval = value
-            _G[self:GetName() .. 'Text']:SetText("Refresh Interval: " .. value .. "s")
-            TT:UpdateFrames()
-        end)
-    options.refreshSlider:SetWidth(250)
-    options.refreshSlider:SetHeight(15)
-    options.refreshSlider:SetPoint("TOPLEFT", refreshTimer, "BOTTOMLEFT", 0, -30)
-
-    local textColors = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-    textColors:SetPoint("TOPLEFT", displaySettings, "BOTTOMLEFT", 0, -150)
-    textColors:SetText("Text Colors")
-
-    options.changeColor = newCheckbox("ChangeColor", "Changing Color", "Changes Color depending on the Value",
-        function(self, value)
-            FpsLatencyMeterConfig.changeColor = value
-            if value then
-                options.highColorLabel.colorPicker.SetDisabled(false)
-                options.mediumColorLabel.colorPicker.SetDisabled(false)
-                options.lowColorLabel.colorPicker.SetDisabled(false)
-            else
-                options.highColorLabel.colorPicker.SetDisabled(true)
-                options.mediumColorLabel.colorPicker.SetDisabled(true)
-                options.lowColorLabel.colorPicker.SetDisabled(true)
-            end
-            TT:UpdateFrames()
-        end)
-    options.changeColor:SetPoint("TOPLEFT", textColors, "BOTTOMLEFT", 0, -10)
-
-    local function newColorSelector(name, label, description, initialColor, SetColor)
-        local colorLabel = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-        colorLabel:SetText(label)
-
-        local colorPicker = AceGUI:Create("ColorPicker")
-        colorPicker:SetLabel("")
-        colorPicker:SetWidth(25)
-        colorPicker:SetHeight(25)
-
-        local r, g, b = unpack(initialColor)
-        colorPicker:SetColor(r, g, b, 1) -- Alpha defaults to 1
-
-        local currentColor = { r, g, b }
-
-        local aceFrame = colorPicker.frame
-        aceFrame:SetParent(frame)
-        aceFrame:SetSize(25, 25)
-        aceFrame:Show()
-
-        colorPicker:SetCallback("OnValueChanged", function(widget, event, newR, newG, newB, newA)
-            currentColor = { newR, newG, newB }
-            SetColor(newR, newG, newB)
-        end)
-
-        aceFrame.tooltipText = label
-        aceFrame.tooltipRequirement = description
-
-        colorLabel.colorPicker = colorPicker
-
-        colorPicker.SetDisabled = function(disable)
-            if disable then
-                aceFrame:Disable()
-                colorLabel:SetFontObject("GameFontDisable")
-            else
-                aceFrame:Enable()
-                colorLabel:SetFontObject("GameFontHighlight")
-            end
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.fps
         end
 
-        return colorLabel, aceFrame
+        initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
     end
 
-    local highColor = FpsLatencyMeterConfig.highColor
-    local mediumColor = FpsLatencyMeterConfig.mediumColor
-    local lowColor = FpsLatencyMeterConfig.lowColor
+    do
+        local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameFpsY", enableFeaturesSection,
+            "FPS_", "fps_y_offset", "Y Offset", FpsLatencyMeterBaseConfig.frameFpsY, minValueY, maxValueY, 1,
+            TT:UpdateFrames(), "Position of the text in Y axis")
+        initializer:AddShownPredicate(function() return fpsSetting:GetValue() end)
 
-    local function SetHighColor(r, g, b)
-        FpsLatencyMeterConfig.highColor = { r, g, b }
-        highColor = { r, g, b }
-        TT:UpdateFrames()
-    end
-    local function SetMediumColor(r, g, b)
-        FpsLatencyMeterConfig.mediumColor = { r, g, b }
-        mediumColor = { r, g, b }
-        TT:UpdateFrames()
-    end
-    local function SetLowColor(r, g, b)
-        FpsLatencyMeterConfig.lowColor = { r, g, b }
-        lowColor = { r, g, b }
-        TT:UpdateFrames()
-    end
-
-    options.highColorLabel, options.highColorSwatch = newColorSelector("HighColorSelector", "High Color",
-        "High Value Color (<15fps, >200ms)", highColor, SetHighColor)
-    options.highColorSwatch:SetPoint("TOPLEFT", textColors, "BOTTOMLEFT", 20, -40)
-    options.highColorLabel:SetPoint("LEFT", options.highColorSwatch, "RIGHT", 10, 0)
-
-    options.mediumColorLabel, options.mediumColorSwatch = newColorSelector("MediumColorSelector", "Medium Color",
-        "Medium Value Color (<30fps, >100ms)", mediumColor, SetMediumColor)
-    options.mediumColorSwatch:SetPoint("TOPLEFT", textColors, "BOTTOMLEFT", 20, -70)
-    options.mediumColorLabel:SetPoint("LEFT", options.mediumColorSwatch, "RIGHT", 10, 0)
-
-    options.lowColorLabel, options.lowColorSwatch = newColorSelector("LowColorSelector", "Low Color",
-        "Low Value Color (>30fps, <100ms)", lowColor, SetLowColor)
-    options.lowColorSwatch:SetPoint("TOPLEFT", textColors, "BOTTOMLEFT", 20, -100)
-    options.lowColorLabel:SetPoint("LEFT", options.lowColorSwatch, "RIGHT", 10, 0)
-
-    local function getConfig()
-        options.positionX:SetValue(FpsLatencyMeterConfig.frameX)
-        options.positionY:SetValue(FpsLatencyMeterConfig.frameY)
-
-        options.showFps:SetChecked(FpsLatencyMeterConfig.fps)
-        options.showLatency:SetChecked(FpsLatencyMeterConfig.latency)
-
-        options.showHomeLatency:SetDisabled(not FpsLatencyMeterConfig.latency)
-        options.showWorldLatency:SetDisabled(not FpsLatencyMeterConfig.latency)
-
-        if FpsLatencyMeterConfig.latency then
-            options.showHomeLatency:SetChecked(FpsLatencyMeterConfig.latencyHome)
-            options.showWorldLatency:SetChecked(FpsLatencyMeterConfig.latencyWorld)
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.fps
         end
 
-        options.refreshSlider:SetValue(FpsLatencyMeterConfig.refreshInterval or 1)
-        options.changeColor:SetChecked(FpsLatencyMeterConfig.changeColor)
-
-        ResetColors(options)
+        initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
     end
 
-    frame.Refresh = function()
-        getConfig()
+    -- Latency
+    local latencySetting, latencyInitializer
+    do
+        latencyInitializer, latencySetting = SettingsLib:CreateCheckbox(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "MS_",
+            key = "ms_show_text",
+            name = "Show MS",
+            default = FpsLatencyMeterBaseConfig.latency,
+            get = function()
+                return FpsLatencyMeterConfig.latency
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.latency = value
+                TT:UpdateFrames()
+            end,
+            desc = "Shows MS indicators",
+        })
     end
 
-    local resetcfg = CreateFrame("Button", "FpsLatencyOptButtonResetCfg", frame, "UIPanelButtonTemplate")
-    resetcfg:SetText("Reset configuration")
-    resetcfg:SetWidth(177)
-    resetcfg:SetHeight(24)
-    resetcfg:SetPoint("TOPLEFT", positionFrame, "BOTTOMLEFT", 0, -185)
-    resetcfg:SetScript("OnClick", function()
-        resetCfg(options)
-        frame:Refresh()
-    end)
+    -- Latency Home
+    local latencyHomeSetting, latencyHomeInitializer
+    do
+        latencyHomeInitializer, latencyHomeSetting = SettingsLib:CreateCheckbox(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "MS_",
+            key = "ms_home_show_text",
+            name = "Show Home MS",
+            default = FpsLatencyMeterBaseConfig.latencyHome,
+            get = function()
+                return FpsLatencyMeterConfig.latencyHome
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.latencyHome = value
+                TT:UpdateFrames()
+            end,
+            desc = "Shows MS (Home) indicator",
+        })
+        latencyHomeInitializer:AddShownPredicate(function() return latencySetting:GetValue() end)
 
-    getConfig()
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency
+        end
 
-    frame:SetScript("OnShow", function()
-        getConfig()
-    end)
-    frame:SetScript("OnHide", function()
-        getConfig()
-    end)
+        latencyHomeInitializer:SetParentInitializer(latencyInitializer,
+            latencyInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    do
+        local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameLatencyHomeX",
+            enableFeaturesSection, "MS_", "ms_home_x_offset", "Home MS: X Offset",
+            FpsLatencyMeterBaseConfig.frameLatencyHomeX, minValueX, maxValueX, 1,
+            TT:UpdateFrames(), "Position of the text in X axis")
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyHomeSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyHome
+        end
+
+        initializer:SetParentInitializer(latencyHomeInitializer,
+            latencyHomeInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    do
+        local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameLatencyHomeY",
+            enableFeaturesSection, "MS_", "ms_home_y_offset", "Home MS: Y Offset",
+            FpsLatencyMeterBaseConfig.frameLatencyHomeY, minValueY, maxValueY, 1,
+            TT:UpdateFrames(), "Position of the text in Y axis")
+
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyHomeSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyHome
+        end
+
+        initializer:SetParentInitializer(latencyHomeInitializer,
+            latencyHomeInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    -- Latency World
+    local latencyWorldSetting, latencyWorldInitializer
+    do
+        latencyWorldInitializer, latencyWorldSetting = SettingsLib:CreateCheckbox(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "MS_",
+            key = "ms_world_show_text",
+            name = "Show World MS",
+            default = FpsLatencyMeterBaseConfig.latencyWorld,
+            get = function()
+                return FpsLatencyMeterConfig.latencyWorld
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.latencyWorld = value
+                TT:UpdateFrames()
+            end,
+            desc = "Shows MS (World) indicator",
+        })
+        latencyWorldInitializer:AddShownPredicate(function() return latencySetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency
+        end
+
+        latencyWorldInitializer:SetParentInitializer(latencyInitializer,
+            latencyInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    do
+        local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameLatencyWorldX",
+            enableFeaturesSection, "MS_", "ms_world_x_offset", "World MS: X Offset",
+            FpsLatencyMeterBaseConfig.frameLatencyWorldX, minValueX, maxValueX, 1,
+            TT:UpdateFrames(), "Position of the text in X axis")
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyWorld
+        end
+
+        initializer:SetParentInitializer(latencyWorldInitializer,
+            latencyWorldInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    do
+        local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "frameLatencyWorldY",
+            enableFeaturesSection, "MS_", "ms_world_y_offset", "World MS: Y Offset",
+            FpsLatencyMeterBaseConfig.frameLatencyWorldY, minValueY, maxValueY, 1,
+            TT:UpdateFrames(), "Position of the text in Y axis")
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyWorld
+        end
+
+        initializer:SetParentInitializer(latencyWorldInitializer,
+            latencyWorldInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    --------------------------------------------------------------------------------
+    -- OTHER OPTIONS SECTION
+    --------------------------------------------------------------------------------
+    local otherSection = SettingsLib:CreateExpandableSection(category, {
+        name = "Other options",
+        expanded = false,
+        colorizeTitle = false,
+    })
+
+    -- Font dropdown
+    do
+        SettingsLib:CreateScrollDropdown(category, {
+            parentSection = otherSection,
+            prefix = "FPS_MS_",
+            key = "fps_ms_font_name",
+            name = "Font",
+            default = FpsLatencyMeterBaseConfig.fontName,
+            height = 220,
+            get = function()
+                return FpsLatencyMeterConfig.fontName
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.fontName = value
+                TT:UpdateFrames()
+            end,
+            desc = "Select the font for the text to be displayed",
+            generator = function(dropdown, rootDescription)
+                dropdown.fontPool = {}
+                if not dropdown._FPS_MS_FontFace_Dropdown_OnMenuClosed_hooked then
+                    hooksecurefunc(dropdown, "OnMenuClosed", function()
+                        for _, fontDisplay in pairs(dropdown.fontPool) do
+                            fontDisplay:Hide()
+                        end
+                    end)
+                    dropdown._FPS_MS_FontFace_Dropdown_OnMenuClosed_hooked = true
+                end
+                local fonts = LSM:HashTable(LSM.MediaType.FONT)
+                local sortedFonts = {}
+                for fontName in pairs(fonts) do
+                    if fontName ~= "" then
+                        table.insert(sortedFonts, fontName)
+                    end
+                end
+                table.sort(sortedFonts)
+
+                for index, fontName in ipairs(sortedFonts) do
+                    local fontPath = fonts[fontName]
+
+                    local button = rootDescription:CreateRadio(fontName, function()
+                        return FpsLatencyMeterConfig.fontName == fontName
+                    end, function()
+                        FpsLatencyMeterConfig.fontName = fontName
+                        TT:UpdateFrames()
+                        dropdown:SetText(fontName)
+                    end)
+
+                    button:AddInitializer(function(self)
+                        local fontDisplay = dropdown.fontPool[index]
+                        if not fontDisplay then
+                            fontDisplay = dropdown:CreateFontString(nil, "BACKGROUND")
+                            dropdown.fontPool[index] = fontDisplay
+                        end
+
+                        self.fontString:Hide()
+
+                        fontDisplay:SetParent(self)
+                        fontDisplay:SetPoint("LEFT", self.fontString, "LEFT", 0, 0)
+                        fontDisplay:SetFont(fontPath, 12)
+                        fontDisplay:SetText(fontName)
+                        fontDisplay:Show()
+                    end)
+                end
+            end,
+        })
+    end
+
+    -- Font size
+    do
+        local initializer, setting = CreateParentedSlider(FpsLatencyMeterConfig, "fontSize",
+            otherSection, "FPS_MS_", "fps_ms_font_size", "Font Size",
+            FpsLatencyMeterBaseConfig.fontSize, 8, 50, 1, TT:UpdateFrames(),
+            "The font size of the text to be displayed")
+    end
+
+    -- Changing Color checkbox
+    local changeColorSetting, colorPickersSetting
+    local colorDescription = "Changes the color of the text according to the selected one below"
+    if not TT:IsRetail() then
+        colorDescription =
+            "Changes the color of the text, depending on the FPS and MS.\n\n"
+            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.highColor[1], FpsLatencyMeterConfig.highColor[2],
+                FpsLatencyMeterConfig.highColor[3]) .. "Red for < 15 fps or > 200 ms|r\n\n"
+            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.mediumColor[1], FpsLatencyMeterConfig.mediumColor[2],
+                FpsLatencyMeterConfig.mediumColor[3]) .. "Yellow for < 30 fps or > 100 ms|r\n\n"
+            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.lowColor[1], FpsLatencyMeterConfig.lowColor[2],
+                FpsLatencyMeterConfig.lowColor[3]) .. "Green for > 30 fps or < 100 ms|r"
+    end
+    do
+        colorPickersSetting, changeColorSetting = SettingsLib:CreateCheckbox(category, {
+            parentSection = otherSection,
+            prefix = "FPS_MS_",
+            key = "fps_ms_show_colors",
+            name = "Changing Color",
+            default = FpsLatencyMeterBaseConfig.changeColor,
+            get = function()
+                return FpsLatencyMeterConfig.changeColor
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.changeColor = value
+                TT:UpdateFrames()
+            end,
+            desc = colorDescription,
+        })
+    end
+
+    -- Color pickers
+    if TT:IsRetail() then
+        local colorData = {
+            {
+                label = "High Color (< 15 fps, > 200 ms)",
+                key = "highColor",
+            },
+            {
+                label = "Medium Color (< 30 fps, > 100 ms)",
+                key = "mediumColor",
+            },
+            {
+                label = "Low Color (> 30 fps, < 100 ms)",
+                key = "lowColor",
+            },
+        }
+        do
+            colorPickersSetting = SettingsLib:CreateColorOverrides(category, {
+                parentSection = otherSection,
+                prefix = "FPS_MS_",
+                entries = colorData,
+                hasOpacity = false,
+                getColor = function(key)
+                    local color = FpsLatencyMeterConfig[key] or FpsLatencyMeterBaseConfig[key]
+                    return color[1], color[2], color[3], color[4]
+                end,
+                setColor = function(key, r, g, b, a)
+                    local value = { r, g, b, a or 1 }
+                    FpsLatencyMeterConfig[key] = value
+                    TT:UpdateFrames()
+                end,
+                getDefaultColor = function(key)
+                    local color = FpsLatencyMeterBaseConfig[key]
+                    return color[1], color[2], color[3], color[4]
+                end,
+                colorizeLabel = true
+            })
+            colorPickersSetting:AddShownPredicate(function() return changeColorSetting:GetValue() end)
+        end
+    end
+
+    Settings.RegisterAddOnCategory(category)
+end
+
+SettingsRegistrar:AddRegistrant(Register)
+
+local function ActionResetPositions()
+    TT:ResetPositions()
+    print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Positions have been reset to default.")
+end
+
+local function ActionResetSettings(reloadUI)
+    ResetCfg()
+    if reloadUI then
+        ReloadUI()
+    else
+        print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Configuration has been reset to default.")
+    end
+end
+
+hooksecurefunc(SettingsPanel, "DisplayCategory", function(self, category)
+    local header = SettingsPanel.Container.SettingsList.Header
+    if category:GetID() == Settings.FPS_LATENCY_CATEGORY_ID then
+        if not header.FpsLatencyMeter_ResetPositions then
+            header.FpsLatencyMeter_ResetPositions = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
+            header.FpsLatencyMeter_ResetPositions:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -10, 0)
+            header.FpsLatencyMeter_ResetPositions:SetSize(header.DefaultsButton:GetSize())
+            header.FpsLatencyMeter_ResetPositions:SetText("Reset Positions")
+            header.FpsLatencyMeter_ResetPositions:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+                GameTooltip:ClearLines()
+                GameTooltip:SetText("Resets all positions to default")
+                GameTooltip:Show()
+            end)
+            header.FpsLatencyMeter_ResetPositions:SetScript("OnLeave", function(self)
+                GameTooltip:Hide()
+            end)
+            header.FpsLatencyMeter_ResetPositions:SetScript("OnClick", function()
+                SettingsPanel:Hide()
+                ActionResetPositions()
+            end)
+        end
+        if not header.FpsLatencyMeter_ResetSettings then
+            header.FpsLatencyMeter_ResetSettings = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
+            header.FpsLatencyMeter_ResetSettings:SetPoint("LEFT", header.DefaultsButton, "LEFT", 0, 0)
+            header.FpsLatencyMeter_ResetSettings:SetSize(header.DefaultsButton:GetSize())
+            header.FpsLatencyMeter_ResetSettings:SetText("Reset Settings")
+            header.FpsLatencyMeter_ResetSettings:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+                GameTooltip:ClearLines()
+                GameTooltip:SetText("Resets all settings to default (except positions)")
+                GameTooltip:Show()
+            end)
+            header.FpsLatencyMeter_ResetSettings:SetScript("OnLeave", function(self)
+                GameTooltip:Hide()
+            end)
+            header.FpsLatencyMeter_ResetSettings:SetScript("OnClick", function()
+                SettingsPanel:Hide()
+                ActionResetSettings(false)
+            end)
+        end
+
+        header.FpsLatencyMeter_ResetPositions:Show()
+        header.FpsLatencyMeter_ResetSettings:Show()
+
+        if header.DefaultsButton:IsShown() then
+            header.DefaultsButton:Hide()
+        end
+    else
+        if header.FpsLatencyMeter_ResetPositions then
+            header.FpsLatencyMeter_ResetPositions:Hide()
+        end
+        if header.FpsLatencyMeter_ResetSettings then
+            header.FpsLatencyMeter_ResetSettings:Hide()
+        end
+        if not header.DefaultsButton:IsShown() then
+            header.DefaultsButton:Show()
+        end
+    end
 end)
 
-SLASH_FPSLATENCY1 = "/fps";
-SLASH_FPSLATENCY2 = "/latency";
-SLASH_FPSLATENCY3 = "/ms";
+-- for addon compartment (in .toc)
+function OpenFpsLatencySettings()
+    Settings.OpenToCategory(Settings.FPS_LATENCY_CATEGORY_ID)
+end
+
+SLASH_FPSLATENCY1 = "/fps"
+SLASH_FPSLATENCY2 = "/latency"
+SLASH_FPSLATENCY3 = "/ms"
 function SlashCmdList.FPSLATENCY(msg)
     local cmd = strlower(msg)
     if (cmd == "reset") then
-        resetCfg()
-        if (frame:IsShown()) then
-            frame:Refresh()
-        end
-        print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Configuration has been reset to default.")
+        ResetCfg()
+        ActionResetSettings(true)
     else
-        Settings.OpenToCategory(category.ID)
+        OpenFpsLatencySettings()
     end
 end

@@ -31,8 +31,8 @@ local FpsLatencyMeterBaseConfig = {
     mediumColor = { 0.94509810209274, 0.76862752437592, 0.058823533535519, 1 },
     lowColor = { 0.1803921610117, 0.80000007152557, 0.44313728809357, 1 },
     framePoint = "CENTER",
-    frameX = 0, --610,
-    frameY = 0, --532,
+    frameX = 0,
+    frameY = 0,
 }
 FpsLatencyMeterConfig = FpsLatencyMeterConfig or {
     fps = FpsLatencyMeterBaseConfig.fps,
@@ -119,7 +119,7 @@ if TT:IsRetail() then
         TT:UpdateFrames()
     end
     local function Register()
-        local category, layout = Settings.RegisterVerticalLayoutCategory(addOnTitle .. " v" .. addOnVersion)
+        local category, layout = Settings.RegisterVerticalLayoutCategory(addOnTitle)
         Settings.FPS_LATENCY_CATEGORY_ID = category:GetID()
 
         layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Enable Features"))
@@ -582,6 +582,25 @@ elseif TT:IsClassic() then
         end)
     end)
 end
+
+hooksecurefunc(SettingsPanel, "DisplayCategory", function(self, category)
+    if TT:IsRetail() then
+        local header = SettingsPanel.Container.SettingsList.Header
+        if category:GetID() == Settings.FPS_LATENCY_CATEGORY_ID then
+            if not header.FpsLatencyMeter_Version then
+                header.FpsLatencyMeter_Version = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
+                header.FpsLatencyMeter_Version:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -10, 0)
+                header.FpsLatencyMeter_Version:SetSize(header.DefaultsButton:GetSize())
+                header.FpsLatencyMeter_Version:SetText("v" .. addOnVersion)
+            end
+            header.FpsLatencyMeter_Version:Show()
+        else
+            if header.FpsLatencyMeter_Version then
+                header.FpsLatencyMeter_Version:Hide()
+            end
+        end
+    end
+end)
 
 -- for addon compartment (in .toc)
 function OpenFpsLatencySettings()

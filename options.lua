@@ -27,7 +27,7 @@ local FpsLatencyMeterBaseConfig = {
     frameX = 0, --610,
     frameY = 0, --532,
 }
-FpsLatencyMeterConfig = {
+FpsLatencyMeterConfig = FpsLatencyMeterConfig or {
     fps = FpsLatencyMeterBaseConfig.fps,
     latency = FpsLatencyMeterBaseConfig.latency,
     latencyHome = FpsLatencyMeterBaseConfig.latencyHome,
@@ -45,6 +45,7 @@ FpsLatencyMeterConfig = {
 function TT:GetDefaultPositions()
     FpsLatencyMeterConfig.frameX = FpsLatencyMeterBaseConfig.frameX
     FpsLatencyMeterConfig.frameY = FpsLatencyMeterBaseConfig.frameY
+    FpsLatencyMeterConfig.framePoint = FpsLatencyMeterBaseConfig.framePoint
 end
 
 function TT:GetDefaults()
@@ -57,7 +58,6 @@ function TT:GetDefaults()
     FpsLatencyMeterConfig.highColor = FpsLatencyMeterBaseConfig.highColor
     FpsLatencyMeterConfig.mediumColor = FpsLatencyMeterBaseConfig.mediumColor
     FpsLatencyMeterConfig.lowColor = FpsLatencyMeterBaseConfig.lowColor
-    FpsLatencyMeterConfig.framePoint = FpsLatencyMeterBaseConfig.framePoint
 end
 
 -- local function ResetColors(options)
@@ -575,23 +575,46 @@ SettingsRegistrar:AddRegistrant(Register)
 
 hooksecurefunc(SettingsPanel, "DisplayCategory", function(self, category)
     local header = SettingsPanel.Container.SettingsList.Header
-    if ((category:GetID() == Settings.FPS_LATENCY_CATEGORY_ID or (category:HasParentCategory() and category:GetParentCategory():GetID() == Settings.FPS_LATENCY_CATEGORY_ID))
-            and not header.FpsLatencyMeter_Reload) then
-        header.FpsLatencyMeter_Reload = UberUI:CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
-        header.FpsLatencyMeter_Reload:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -5, 0)
-        header.FpsLatencyMeter_Reload:SetSize(header.DefaultsButton:GetSize())
-        header.FpsLatencyMeter_Reload:SetFrameStrata("HIGH")
-        header.FpsLatencyMeter_Reload:SetText("Restart positions")
+    if category:GetID() == Settings.FPS_LATENCY_CATEGORY_ID then
+        if not header.FpsLatencyMeter_ResetSettings then
+            header.FpsLatencyMeter_ResetSettings = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
+            header.FpsLatencyMeter_ResetSettings:SetPoint("LEFT", header.DefaultsButton, "LEFT", 0, 0)
+            header.FpsLatencyMeter_ResetSettings:SetSize(header.DefaultsButton:GetSize())
+            header.FpsLatencyMeter_ResetSettings:SetFrameStrata("HIGH")
+            header.FpsLatencyMeter_ResetSettings:SetText("Reset Settings")
 
-        header.FpsLatencyMeter_Reload:SetScript("OnClick", function(self, button, down)
-            RestartPositions()
-        end)
-    elseif ((category:GetID() == Settings.FPS_LATENCY_CATEGORY_ID or
-                (category:HasParentCategory() and category:GetParentCategory():GetID() == Settings.FPS_LATENCY_CATEGORY_ID))
-            and header.FpsLatencyMeter_Reload) then
-        header.FpsLatencyMeter_Reload:Show()
-    elseif (header.FpsLatencyMeter_Reload) then
-        header.FpsLatencyMeter_Reload:Hide()
+            header.FpsLatencyMeter_ResetSettings:SetScript("OnClick", function(self, button, down)
+                ResetCfg()
+            end)
+
+            if header.DefaultsButton:IsShown() then
+                header.DefaultsButton:Hide()
+            end
+        else
+            header.FpsLatencyMeter_ResetSettings:Show()
+            if header.DefaultsButton:IsShown() then
+                header.DefaultsButton:Hide()
+            end
+        end
+        if not header.FpsLatencyMeter_RestartPositions then
+            header.FpsLatencyMeter_RestartPositions = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
+            header.FpsLatencyMeter_RestartPositions:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -5, 0)
+            header.FpsLatencyMeter_RestartPositions:SetSize(header.DefaultsButton:GetSize())
+            header.FpsLatencyMeter_RestartPositions:SetFrameStrata("HIGH")
+            header.FpsLatencyMeter_RestartPositions:SetText("Restart Positions")
+
+            header.FpsLatencyMeter_RestartPositions:SetScript("OnClick", function(self, button, down)
+                RestartPositions()
+            end)
+        else
+            header.FpsLatencyMeter_RestartPositions:Show()
+        end
+    else
+        header.FpsLatencyMeter_RestartPositions:Hide()
+        header.FpsLatencyMeter_ResetSettings:Hide()
+        if not header.DefaultsButton:IsShown() then
+            header.DefaultsButton:Show()
+        end
     end
 end)
 

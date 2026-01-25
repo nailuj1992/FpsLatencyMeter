@@ -606,6 +606,18 @@ elseif TT:IsClassic() then
 
         return inlineGroup
     end
+    local function newSimpleGroup(parent, layout)
+        local group = AceGUI:Create("SimpleGroup")
+        group:SetFullWidth(true)
+        group:SetLayout(layout)
+
+        local aceFrame = group.frame
+        aceFrame:SetParent(parent)
+        -- aceFrame:SetSize(width, height)
+        aceFrame:Show()
+
+        return group
+    end
 
     -- Add to Blizzard settings
     local category = Settings.RegisterCanvasLayoutCategory(frame, frame.name, frame.name)
@@ -639,40 +651,98 @@ elseif TT:IsClassic() then
         title:SetPoint("TOPLEFT", 16, -16)
         title:SetText(addOnTitle .. " v" .. addOnVersion)
 
-        local enableFeatures = newInlineGroup(frame, "Flow", "Enable Features", 425, 120)
+        local enableFeatures = newInlineGroup(frame, "Flow", "Enable Features", 635, 250)
         enableFeatures:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
 
-        options.showFps = newCheckbox(enableFeatures.content, "Show FPS", "Shows FPS indicator", 170, 25,
+        local sectionFps = newSimpleGroup(enableFeatures.content, "Flow")
+        enableFeatures:AddChild(sectionFps)
+
+        options.showFps = newCheckbox(sectionFps.content, "Show FPS", "Shows FPS indicator", 170, 25,
             function(widget, event, value)
                 FpsLatencyMeterConfig.fps = value
                 TT:UpdateFrames()
             end)
-        enableFeatures:AddChild(options.showFps)
+        sectionFps:AddChild(options.showFps)
 
-        options.showHomeLatency = newCheckbox(enableFeatures.content, "Show Home MS", "Shows MS (Home) indicator", 205,
-            25,
+        options.fpsPositionX = newSlider(sectionFps.content, "Frame Position in X", minValueX, maxValueX, 180, 60,
             function(widget, event, value)
-                FpsLatencyMeterConfig.latencyHome = value
+                value = tonumber(string.format("%d", value))
+                FpsLatencyMeterConfig.frameFpsX = value
                 TT:UpdateFrames()
             end)
-        enableFeatures:AddChild(options.showHomeLatency)
+        sectionFps:AddChild(options.fpsPositionX)
 
-        options.showLatency = newCheckbox(enableFeatures.content, "Show Latency", "Shows MS indicators", 170, 25,
+        options.fpsPositionY = newSlider(sectionFps.content, "Frame Position in Y", minValueY, maxValueY, 180, 60,
+            function(widget, event, value)
+                value = tonumber(string.format("%d", value))
+                FpsLatencyMeterConfig.frameFpsY = value
+                TT:UpdateFrames()
+            end)
+        sectionFps:AddChild(options.fpsPositionY)
+
+        local sectionLatency = newSimpleGroup(enableFeatures.content, "Flow")
+        enableFeatures:AddChild(sectionLatency)
+
+        options.showLatency = newCheckbox(sectionLatency.content, "Show Latency", "Shows MS indicators", 170, 25,
             function(widget, event, value)
                 FpsLatencyMeterConfig.latency = value
                 options.showHomeLatency:SetDisabled(not value)
                 options.showWorldLatency:SetDisabled(not value)
                 TT:UpdateFrames()
             end)
-        enableFeatures:AddChild(options.showLatency)
+        sectionLatency:AddChild(options.showLatency)
 
-        options.showWorldLatency = newCheckbox(enableFeatures.content, "Show World MS", "Shows MS (World) indicator", 205,
-            25,
-            function(widget, event, value)
+        local sectionLatencyHome = newSimpleGroup(enableFeatures.content, "Flow")
+        enableFeatures:AddChild(sectionLatencyHome)
+
+        options.showHomeLatency = newCheckbox(sectionLatencyHome.content, "Show Home MS", "Shows MS (Home) indicator",
+            205, 25, function(widget, event, value)
+                FpsLatencyMeterConfig.latencyHome = value
+                TT:UpdateFrames()
+            end)
+        sectionLatencyHome:AddChild(options.showHomeLatency)
+
+        options.latencyHomePositionX = newSlider(sectionLatencyHome.content, "Frame Position in X", minValueX, maxValueX,
+            180, 60, function(widget, event, value)
+                value = tonumber(string.format("%d", value))
+                FpsLatencyMeterConfig.frameLatencyHomeX = value
+                TT:UpdateFrames()
+            end)
+        sectionLatencyHome:AddChild(options.latencyHomePositionX)
+
+        options.latencyHomePositionY = newSlider(sectionLatencyHome.content, "Frame Position in Y", minValueY, maxValueY,
+            180, 60, function(widget, event, value)
+                value = tonumber(string.format("%d", value))
+                FpsLatencyMeterConfig.frameLatencyHomeY = value
+                TT:UpdateFrames()
+            end)
+        sectionLatencyHome:AddChild(options.latencyHomePositionY)
+
+        local sectionLatencyWorld = newSimpleGroup(enableFeatures.content, "Flow")
+        enableFeatures:AddChild(sectionLatencyWorld)
+
+        options.showWorldLatency = newCheckbox(sectionLatencyWorld.content, "Show World MS", "Shows MS (World) indicator",
+            205, 25, function(widget, event, value)
                 FpsLatencyMeterConfig.latencyWorld = value
                 TT:UpdateFrames()
             end)
-        enableFeatures:AddChild(options.showWorldLatency)
+        sectionLatencyWorld:AddChild(options.showWorldLatency)
+
+        options.latencyWorldPositionX = newSlider(sectionLatencyWorld.content, "Frame Position in X", minValueX,
+            maxValueX, 180, 60, function(widget, event, value)
+                value = tonumber(string.format("%d", value))
+                FpsLatencyMeterConfig.frameLatencyWorldX = value
+                TT:UpdateFrames()
+            end)
+        sectionLatencyWorld:AddChild(options.latencyWorldPositionX)
+
+        options.latencyWorldPositionY = newSlider(sectionLatencyWorld.content, "Frame Position in Y", minValueY,
+            maxValueY, 180, 60, function(widget, event, value)
+                value = tonumber(string.format("%d", value))
+                FpsLatencyMeterConfig.frameLatencyWorldY = value
+                TT:UpdateFrames()
+            end)
+        sectionLatencyWorld:AddChild(options.latencyWorldPositionY)
 
         local textColors = newInlineGroup(frame, "Flow", "Text Colors", 300, 180)
         textColors:SetPoint("TOPLEFT", enableFeatures.frame, "BOTTOMLEFT", 0, 0)
@@ -723,35 +793,20 @@ elseif TT:IsClassic() then
         options.refreshSlider:SetHeight(15)
         refreshTimer:AddChild(options.refreshSlider)
 
-        local positionFrame = newInlineGroup(frame, "Flow", "Position Settings", 300, 140)
-        positionFrame:SetPoint("LEFT", textColors.frame, "BOTTOMLEFT", 0, -75)
-
-        options.positionX = newSlider(positionFrame.content, "Frame Position in X", -1200, 1200, 250, 60,
-            function(widget, event, value)
-                value = tonumber(string.format("%d", value))
-                FpsLatencyMeterConfig.frameX = value
-                TT:UpdateFrames()
-            end)
-        positionFrame:AddChild(options.positionX)
-
-        options.positionY = newSlider(positionFrame.content, "Frame Position in Y", -700, 700, 250, 60,
-            function(widget, event, value)
-                value = tonumber(string.format("%d", value))
-                FpsLatencyMeterConfig.frameY = value
-                TT:UpdateFrames()
-            end)
-        positionFrame:AddChild(options.positionY)
-
         local resetcfg = newButton(frame, "Reset configuration",
             function()
                 ResetCfg(options)
                 frame:Refresh()
             end)
-        resetcfg:SetPoint("LEFT", positionFrame.frame, "RIGHT", 70, 0)
+        resetcfg:SetPoint("TOP", refreshTimer.frame, "BOTTOM", 0, 0)
 
         local function getConfig()
-            options.positionX:SetValue(FpsLatencyMeterConfig.frameX)
-            options.positionY:SetValue(FpsLatencyMeterConfig.frameY)
+            options.fpsPositionX:SetValue(FpsLatencyMeterConfig.frameFpsX)
+            options.fpsPositionY:SetValue(FpsLatencyMeterConfig.frameFpsY)
+            options.latencyHomePositionX:SetValue(FpsLatencyMeterConfig.frameLatencyHomeX)
+            options.latencyHomePositionY:SetValue(FpsLatencyMeterConfig.frameLatencyHomeY)
+            options.latencyWorldPositionX:SetValue(FpsLatencyMeterConfig.frameLatencyWorldX)
+            options.latencyWorldPositionY:SetValue(FpsLatencyMeterConfig.frameLatencyWorldY)
 
             options.showFps:SetValue(FpsLatencyMeterConfig.fps)
             options.showLatency:SetValue(FpsLatencyMeterConfig.latency)

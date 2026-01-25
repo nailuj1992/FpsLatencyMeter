@@ -1,26 +1,28 @@
 # FPS & Latency Meter
-WoW addon to show FPS and latency information in real time. *It's supported for WoW Retail, Mists of Pandaria Classic, and Classic era.*
 
-### - Features -
-- Show FPS indicator
-- Show MS indicators (for both Home and World)
+WoW addon to show FPS and latency information in real time. _It's supported for WoW Retail (Midnight), Mists of Pandaria Classic, Burning Crusade Classic Anniversary, and Classic era._
 
-<img width="98" height="64" alt="image" src="https://github.com/user-attachments/assets/9c684769-35cf-4149-8f88-349c26852094" />
+### \- Features -
+
+*   Show FPS indicator
+*   Show MS indicators (for both Home and World)
+
+![image](https://media.forgecdn.net/attachments/description/1321145/description_bc7bb7ed-e4cf-47e8-88a7-6f34dadf778e.jpg)
 
 **Options Menu**  
-Access from *Interface->Addons->FPS & Latency Meter* or chat command **/fps**, **/latency**, or **/ms**
+Access from _Interface->Addons->FPS & Latency Meter_ or chat command **/fps**, **/latency**, or **/ms**
 
-<img width="545" height="343" alt="image" src="https://github.com/user-attachments/assets/1425031e-2f89-4e06-85d2-22dbcaea3e87" />
+![image](https://media.forgecdn.net/attachments/description/1321145/description_a8540155-d812-4fd1-b5ad-0ad951c90940.jpg)
 
----
+![image](https://media.forgecdn.net/attachments/description/1321145/description_c982843b-5aec-407b-ac49-fca18ca0c5a4.jpg)
 
-***If you get "Addon out of date" error***  
-Press ESC for Menu -> Addons -> Check: [X] Load out of date AddOns  
+***
 
-![out-of-date-addon-menu-small](https://user-images.githubusercontent.com/13628128/199223990-17896046-3407-472d-be70-b78fc42ae905.jpg)
+**_If you get "Addon out of date" error_**  
+Press ESC for Menu -> Addons -> Check: \[X\] **Load out of date AddOns** _(The image below is in Spanish)_
 
----
+![image](https://media.forgecdn.net/attachments/description/1321145/description_606bc265-c034-4a18-a430-3e28ee3bdfc9.jpg)
 
-Developed by Nailuj1992
+***
 
-**Note:** If you don't want to download this addon, you can also get the WeakAuras pack on this link: https://wago.io/Pg48oDj_2
+Maintained and adapted for Midnight, Classic era, TBCCA, and MoP by Nailuj1992

@@ -22,8 +22,8 @@ local textWorldMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutlin
 textWorldMS:SetPoint("CENTER", frame, "CENTER", 0, -35)
 textWorldMS:SetTextColor(1, 1, 1)
 
-local function ToWoWColorCode(r, g, b)
-    return string.format("|cFF%02X%02X%02X", r * 255, g * 255, b * 255)
+local function ToWoWColorCode(r, g, b, a)
+    return string.format("|cFF%02X%02X%02X", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
 end
 
 local function GetColorCodeFps(fps)
@@ -35,7 +35,7 @@ local function GetColorCodeFps(fps)
     else
         colorValue = FpsLatencyMeterConfig.lowColor
     end
-    return ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3])
+    return ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3], colorValue[4] or 1)
 end
 
 local function GetColorCodeMs(ms)
@@ -47,7 +47,7 @@ local function GetColorCodeMs(ms)
     else
         colorValue = FpsLatencyMeterConfig.lowColor
     end
-    return ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3])
+    return ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3], colorValue[4] or 1), colorValue[4] or 1
 end
 
 frame:SetScript("OnUpdate", function(self, elapsed)

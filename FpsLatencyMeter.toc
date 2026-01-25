@@ -2,6 +2,7 @@
 ## Version: 0.2.1
 ## Title: FPS & Latency Meter
 ## Notes: Shows the current FPS and latency of the client.
+## AddonCompartmentFunc: OpenFpsLatencySettings
 ## Author: Nailuj1992
 ## SavedVariables: FpsLatencyMeterConfig
 

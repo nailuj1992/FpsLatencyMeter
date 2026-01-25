@@ -1,26 +1,22 @@
 local addOnName = ...
 local TT = _G[addOnName]
 
-local frame = CreateFrame("Frame", nil, UIParent)
-frame:SetSize(200, 100)
-frame:SetPoint(FpsLatencyMeterConfig.framePoint,
-    UIParent,
-    FpsLatencyMeterConfig.framePoint,
-    FpsLatencyMeterConfig.frameX,
-    FpsLatencyMeterConfig.frameY
-)
-
-local textFPS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textFPS:SetPoint("CENTER", frame, "CENTER", 0, 0)
+local textFPS = UIParent:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
+textFPS:SetPoint("CENTER", UIParent, "CENTER", FpsLatencyMeterConfig.frameFpsX, FpsLatencyMeterConfig.frameFpsY)
 textFPS:SetTextColor(1, 1, 1)
+textFPS:SetFont(FpsLatencyMeterConfig.fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
-local textHomeMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textHomeMS:SetPoint("CENTER", frame, "CENTER", 0, -20)
+local textHomeMS = UIParent:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
+textHomeMS:SetPoint("CENTER", UIParent, "CENTER", FpsLatencyMeterConfig.frameLatencyHomeX,
+    FpsLatencyMeterConfig.frameLatencyHomeY)
 textHomeMS:SetTextColor(1, 1, 1)
+textHomeMS:SetFont(FpsLatencyMeterConfig.fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
-local textWorldMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textWorldMS:SetPoint("CENTER", frame, "CENTER", 0, -35)
+local textWorldMS = UIParent:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
+textWorldMS:SetPoint("CENTER", UIParent, "CENTER", FpsLatencyMeterConfig.frameLatencyWorldX,
+    FpsLatencyMeterConfig.frameLatencyWorldY)
 textWorldMS:SetTextColor(1, 1, 1)
+textWorldMS:SetFont(FpsLatencyMeterConfig.fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
 local function ToWoWColorCode(r, g, b, a)
     return string.format("|cFF%02X%02X%02X", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
@@ -50,7 +46,7 @@ local function GetColorCodeMs(ms)
     return ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3], colorValue[4] or 1), colorValue[4] or 1
 end
 
-frame:SetScript("OnUpdate", function(self, elapsed)
+UIParent:SetScript("OnUpdate", function(self, elapsed)
     TT:UpdateFrames()
 
     -- Update every second
@@ -89,14 +85,34 @@ frame:SetScript("OnUpdate", function(self, elapsed)
 end)
 
 function TT:UpdateFrames()
-    if FpsLatencyMeterConfig.framePoint and type(FpsLatencyMeterConfig.frameX) == "number" and type(FpsLatencyMeterConfig.frameY) == "number" then
-        frame:ClearAllPoints()
-        frame:SetPoint(
-            FpsLatencyMeterConfig.framePoint,
+    if type(FpsLatencyMeterConfig.frameFpsX) == "number" and type(FpsLatencyMeterConfig.frameFpsY) == "number" then
+        textFPS:ClearAllPoints()
+        textFPS:SetPoint(
+            "CENTER",
             UIParent,
-            FpsLatencyMeterConfig.framePoint,
-            FpsLatencyMeterConfig.frameX,
-            FpsLatencyMeterConfig.frameY
+            "CENTER",
+            FpsLatencyMeterConfig.frameFpsX,
+            FpsLatencyMeterConfig.frameFpsY
+        )
+    end
+    if type(FpsLatencyMeterConfig.frameLatencyHomeX) == "number" and type(FpsLatencyMeterConfig.frameLatencyHomeY) == "number" then
+        textHomeMS:ClearAllPoints()
+        textHomeMS:SetPoint(
+            "CENTER",
+            UIParent,
+            "CENTER",
+            FpsLatencyMeterConfig.frameLatencyHomeX,
+            FpsLatencyMeterConfig.frameLatencyHomeY
+        )
+    end
+    if type(FpsLatencyMeterConfig.frameLatencyWorldX) == "number" and type(FpsLatencyMeterConfig.frameLatencyWorldY) == "number" then
+        textWorldMS:ClearAllPoints()
+        textWorldMS:SetPoint(
+            "CENTER",
+            UIParent,
+            "CENTER",
+            FpsLatencyMeterConfig.frameLatencyWorldX,
+            FpsLatencyMeterConfig.frameLatencyWorldY
         )
     end
 

@@ -37,16 +37,11 @@ FpsLatencyMeterConfig = FpsLatencyMeterConfig or {
     highColor = FpsLatencyMeterBaseConfig.highColor,
     mediumColor = FpsLatencyMeterBaseConfig.mediumColor,
     lowColor = FpsLatencyMeterBaseConfig.lowColor,
+
     framePoint = FpsLatencyMeterBaseConfig.framePoint,
     frameX = FpsLatencyMeterBaseConfig.frameX,
     frameY = FpsLatencyMeterBaseConfig.frameY,
 }
-
-function TT:GetDefaultPositions()
-    FpsLatencyMeterConfig.frameX = FpsLatencyMeterBaseConfig.frameX
-    FpsLatencyMeterConfig.frameY = FpsLatencyMeterBaseConfig.frameY
-    FpsLatencyMeterConfig.framePoint = FpsLatencyMeterBaseConfig.framePoint
-end
 
 function TT:GetDefaults()
     FpsLatencyMeterConfig.fps = FpsLatencyMeterBaseConfig.fps
@@ -58,6 +53,10 @@ function TT:GetDefaults()
     FpsLatencyMeterConfig.highColor = FpsLatencyMeterBaseConfig.highColor
     FpsLatencyMeterConfig.mediumColor = FpsLatencyMeterBaseConfig.mediumColor
     FpsLatencyMeterConfig.lowColor = FpsLatencyMeterBaseConfig.lowColor
+
+    FpsLatencyMeterConfig.framePoint = FpsLatencyMeterBaseConfig.framePoint
+    FpsLatencyMeterConfig.frameX = FpsLatencyMeterBaseConfig.frameX
+    FpsLatencyMeterConfig.frameY = FpsLatencyMeterBaseConfig.frameY
 end
 
 -- local function ResetColors(options)
@@ -71,17 +70,6 @@ end
 --         options.lowColorSelector:SetColor(unpack(FpsLatencyMeterConfig.lowColor))
 --     end
 -- end
-
-local function RestartPositions()
-    TT:GetDefaultPositions()
-    local settingsToUpdate = {
-        "frameX",
-        "frameY"
-    }
-    for _, variable in ipairs(settingsToUpdate) do
-        Settings.NotifyUpdate(variable)
-    end
-end
 
 local function ResetCfg() --(options)
     TT:GetDefaults()
@@ -97,7 +85,9 @@ local function ResetCfg() --(options)
         "changeColor",
         "highColor",
         "mediumColor",
-        "lowColor"
+        "lowColor",
+        "frameX",
+        "frameY",
     }
     for _, variable in ipairs(settingsToUpdate) do
         Settings.NotifyUpdate(variable)
@@ -338,7 +328,7 @@ local function Register()
                 local color = FpsLatencyMeterBaseConfig[key]
                 return color[1], color[2], color[3], color[4]
             end,
-            colorizeLabel = false,
+            colorizeLabel = false
         })
         colorPickersSetting:AddShownPredicate(function() return changeColorSetting:GetValue() end)
     end
@@ -348,7 +338,7 @@ local function Register()
     do
         local name = "Frame Position in X"
         local tooltip = "Position of the frame in X axis"
-        local defaultValue = FpsLatencyMeterConfig.frameX
+        local defaultValue = FpsLatencyMeterBaseConfig.frameX
         local variable = "frameX"
         local variableTbl = FpsLatencyMeterConfig
         local minValue = -4000
@@ -375,7 +365,7 @@ local function Register()
     do
         local name = "Frame Position in Y"
         local tooltip = "Position of the frame in Y axis"
-        local defaultValue = FpsLatencyMeterConfig.frameY
+        local defaultValue = FpsLatencyMeterBaseConfig.frameY
         local variable = "frameY"
         local variableTbl = FpsLatencyMeterConfig
         local minValue = -2000
@@ -572,51 +562,6 @@ end
 -- end)
 
 SettingsRegistrar:AddRegistrant(Register)
-
-hooksecurefunc(SettingsPanel, "DisplayCategory", function(self, category)
-    local header = SettingsPanel.Container.SettingsList.Header
-    if category:GetID() == Settings.FPS_LATENCY_CATEGORY_ID then
-        if not header.FpsLatencyMeter_ResetSettings then
-            header.FpsLatencyMeter_ResetSettings = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
-            header.FpsLatencyMeter_ResetSettings:SetPoint("LEFT", header.DefaultsButton, "LEFT", 0, 0)
-            header.FpsLatencyMeter_ResetSettings:SetSize(header.DefaultsButton:GetSize())
-            header.FpsLatencyMeter_ResetSettings:SetFrameStrata("HIGH")
-            header.FpsLatencyMeter_ResetSettings:SetText("Reset Settings")
-
-            header.FpsLatencyMeter_ResetSettings:SetScript("OnClick", function(self, button, down)
-                ResetCfg()
-            end)
-
-            if header.DefaultsButton:IsShown() then
-                header.DefaultsButton:Hide()
-            end
-        else
-            header.FpsLatencyMeter_ResetSettings:Show()
-            if header.DefaultsButton:IsShown() then
-                header.DefaultsButton:Hide()
-            end
-        end
-        if not header.FpsLatencyMeter_RestartPositions then
-            header.FpsLatencyMeter_RestartPositions = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
-            header.FpsLatencyMeter_RestartPositions:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -5, 0)
-            header.FpsLatencyMeter_RestartPositions:SetSize(header.DefaultsButton:GetSize())
-            header.FpsLatencyMeter_RestartPositions:SetFrameStrata("HIGH")
-            header.FpsLatencyMeter_RestartPositions:SetText("Restart Positions")
-
-            header.FpsLatencyMeter_RestartPositions:SetScript("OnClick", function(self, button, down)
-                RestartPositions()
-            end)
-        else
-            header.FpsLatencyMeter_RestartPositions:Show()
-        end
-    else
-        header.FpsLatencyMeter_RestartPositions:Hide()
-        header.FpsLatencyMeter_ResetSettings:Hide()
-        if not header.DefaultsButton:IsShown() then
-            header.DefaultsButton:Show()
-        end
-    end
-end)
 
 -- for addon compartment (in .toc)
 function OpenFpsLatencySettings()

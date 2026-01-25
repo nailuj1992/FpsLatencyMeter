@@ -108,7 +108,7 @@ if not FpsLatencyMeterConfig then
 end
 
 -- main frame (Classic)
-local frame = CreateFrame("Frame", "Fps Latency Meter Options")
+local frame = CreateFrame("Frame", addOnTitle)
 frame.name = addOnTitle
 frame:Hide()
 

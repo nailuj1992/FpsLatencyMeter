@@ -481,9 +481,9 @@ local function Register()
             .. TT:ToWoWColorCode(FpsLatencyMeterConfig.highColor[1], FpsLatencyMeterConfig.highColor[2],
                 FpsLatencyMeterConfig.highColor[3]) .. "Red for < 15 fps or > 200 ms|r\n\n"
             .. TT:ToWoWColorCode(FpsLatencyMeterConfig.mediumColor[1], FpsLatencyMeterConfig.mediumColor[2],
-                FpsLatencyMeterConfig.mediumColor[3]) .. "Green for < 30 fps or > 100 ms|r\n\n"
+                FpsLatencyMeterConfig.mediumColor[3]) .. "Yellow for < 30 fps or > 100 ms|r\n\n"
             .. TT:ToWoWColorCode(FpsLatencyMeterConfig.lowColor[1], FpsLatencyMeterConfig.lowColor[2],
-                FpsLatencyMeterConfig.lowColor[3]) .. "Blue for > 30 fps or < 100 ms|r"
+                FpsLatencyMeterConfig.lowColor[3]) .. "Green for > 30 fps or < 100 ms|r"
     end
     do
         colorPickersSetting, changeColorSetting = SettingsLib:CreateCheckbox(category, {

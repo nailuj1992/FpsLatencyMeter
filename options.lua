@@ -16,10 +16,6 @@ function TT:IsRetail()
     return majorVersion >= 12 -- Midnight
 end
 
-function TT:IsClassic()
-    return majorVersion <= 5 -- Up to MoP
-end
-
 local FpsLatencyMeterBaseConfig = {
     fps = true,
     latency = true,
@@ -479,7 +475,7 @@ local function Register()
     -- Changing Color checkbox
     local changeColorSetting, colorPickersSetting
     local colorDescription = "Changes the color of the text according to the selected one below"
-    if TT:IsClassic() then
+    if not TT:IsRetail() then
         colorDescription =
             "Changes the color of the text, depending on the FPS and MS.\n\n"
             .. TT:ToWoWColorCode(FpsLatencyMeterConfig.highColor[1], FpsLatencyMeterConfig.highColor[2],

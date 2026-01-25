@@ -3,6 +3,13 @@ local LibStub = _G.LibStub
 assert(LibStub, MODULE_MAJOR .. " requires LibStub")
 local C_Timer = _G.C_Timer
 
+local clientVersionString = GetBuildInfo()
+local majorVersion = tonumber(string.match(clientVersionString, "^(%d+)%.?%d*"))
+
+if majorVersion < 12 then
+	return
+end
+
 -- Primary sublib name; BASE_MAJOR remains as an alias for existing callers.
 local moduleLib, moduleMinor = LibStub:GetLibrary(MODULE_MAJOR, true)
 local baseLib, baseMinor = LibStub:GetLibrary(BASE_MAJOR, true)

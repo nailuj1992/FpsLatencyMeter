@@ -5,19 +5,23 @@ local fonts = LSM:HashTable(LSM.MediaType.FONT)
 
 local TT = _G[addOnName]
 
-local textFPS = UIParent:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textFPS:SetPoint("CENTER", UIParent, "CENTER", FpsLatencyMeterConfig.frameFpsX, FpsLatencyMeterConfig.frameFpsY)
+local frame = CreateFrame("Frame", nil, UIParent)
+frame:SetSize(GetScreenWidth(), GetScreenHeight())
+frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+
+local textFPS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
+textFPS:SetPoint("CENTER", frame, "CENTER", FpsLatencyMeterConfig.frameFpsX, FpsLatencyMeterConfig.frameFpsY)
 textFPS:SetTextColor(1, 1, 1)
 textFPS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
-local textHomeMS = UIParent:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textHomeMS:SetPoint("CENTER", UIParent, "CENTER", FpsLatencyMeterConfig.frameLatencyHomeX,
+local textHomeMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
+textHomeMS:SetPoint("CENTER", frame, "CENTER", FpsLatencyMeterConfig.frameLatencyHomeX,
     FpsLatencyMeterConfig.frameLatencyHomeY)
 textHomeMS:SetTextColor(1, 1, 1)
 textHomeMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
-local textWorldMS = UIParent:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textWorldMS:SetPoint("CENTER", UIParent, "CENTER", FpsLatencyMeterConfig.frameLatencyWorldX,
+local textWorldMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
+textWorldMS:SetPoint("CENTER", frame, "CENTER", FpsLatencyMeterConfig.frameLatencyWorldX,
     FpsLatencyMeterConfig.frameLatencyWorldY)
 textWorldMS:SetTextColor(1, 1, 1)
 textWorldMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
@@ -50,14 +54,14 @@ local function GetColorCodeMs(ms)
     return TT:ToWoWColorCode(colorValue[1], colorValue[2], colorValue[3], colorValue[4] or 1), colorValue[4] or 1
 end
 
-UIParent:SetScript("OnUpdate", function(self, elapsed)
+frame:SetScript("OnUpdate", function(self, elapsed)
     TT:UpdateFrames()
 
     -- Update every second
     self.timer = (self.timer or 0) + elapsed
     if self.timer >= FpsLatencyMeterConfig.refreshInterval then
         local fps = floor(GetFramerate())
-        local _, _, homeMS, worldMS = GetNetStats()
+        local bandWidthIn, bandWidthOut, homeMS, worldMS = GetNetStats()
         if FpsLatencyMeterConfig.fps then
             if FpsLatencyMeterConfig.changeColor then
                 local colorCode = GetColorCodeFps(fps)
@@ -93,7 +97,7 @@ function TT:UpdateFrames()
         textFPS:ClearAllPoints()
         textFPS:SetPoint(
             "CENTER",
-            UIParent,
+            frame,
             "CENTER",
             FpsLatencyMeterConfig.frameFpsX,
             FpsLatencyMeterConfig.frameFpsY
@@ -103,7 +107,7 @@ function TT:UpdateFrames()
         textHomeMS:ClearAllPoints()
         textHomeMS:SetPoint(
             "CENTER",
-            UIParent,
+            frame,
             "CENTER",
             FpsLatencyMeterConfig.frameLatencyHomeX,
             FpsLatencyMeterConfig.frameLatencyHomeY
@@ -113,7 +117,7 @@ function TT:UpdateFrames()
         textWorldMS:ClearAllPoints()
         textWorldMS:SetPoint(
             "CENTER",
-            UIParent,
+            frame,
             "CENTER",
             FpsLatencyMeterConfig.frameLatencyWorldX,
             FpsLatencyMeterConfig.frameLatencyWorldY

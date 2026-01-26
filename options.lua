@@ -332,9 +332,9 @@ local function Register()
     end
 
     local alignmentsMap = {
-        ["LEFT"] = "Right",
+        ["LEFT"] = "Left",
         ["CENTER"] = "Center",
-        ["RIGHT"] = "Left",
+        ["RIGHT"] = "Right",
     }
     do
         local initializer, setting = CreateParentedScrollDown(FpsLatencyMeterConfig, "frameFpsAlign", alignmentsMap,

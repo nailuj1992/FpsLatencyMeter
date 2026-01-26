@@ -10,19 +10,36 @@ frame:SetSize(GetScreenWidth(), GetScreenHeight())
 frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 
 local textFPS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textFPS:SetPoint("CENTER", frame, "CENTER", FpsLatencyMeterConfig.frameFpsX, FpsLatencyMeterConfig.frameFpsY)
+textFPS:SetPoint(
+    FpsLatencyMeterConfig.frameFpsAlign,
+    frame,
+    "CENTER",
+    FpsLatencyMeterConfig.frameFpsX,
+    FpsLatencyMeterConfig.frameFpsY
+)
 textFPS:SetTextColor(1, 1, 1)
 textFPS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
 local textHomeMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textHomeMS:SetPoint("CENTER", frame, "CENTER", FpsLatencyMeterConfig.frameLatencyHomeX,
-    FpsLatencyMeterConfig.frameLatencyHomeY)
+textHomeMS:SetPoint(
+    FpsLatencyMeterConfig.frameLatencyHomeAlign,
+    frame,
+    "CENTER",
+    FpsLatencyMeterConfig
+    .frameLatencyHomeX,
+    FpsLatencyMeterConfig.frameLatencyHomeY
+)
 textHomeMS:SetTextColor(1, 1, 1)
 textHomeMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
 local textWorldMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
-textWorldMS:SetPoint("CENTER", frame, "CENTER", FpsLatencyMeterConfig.frameLatencyWorldX,
-    FpsLatencyMeterConfig.frameLatencyWorldY)
+textWorldMS:SetPoint(
+    FpsLatencyMeterConfig.frameLatencyWorldAlign,
+    frame,
+    "CENTER",
+    FpsLatencyMeterConfig.frameLatencyWorldX,
+    FpsLatencyMeterConfig.frameLatencyWorldY
+)
 textWorldMS:SetTextColor(1, 1, 1)
 textWorldMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
 
@@ -96,7 +113,7 @@ function TT:UpdateFrames()
     if type(FpsLatencyMeterConfig.frameFpsX) == "number" and type(FpsLatencyMeterConfig.frameFpsY) == "number" then
         textFPS:ClearAllPoints()
         textFPS:SetPoint(
-            "CENTER",
+            FpsLatencyMeterConfig.frameFpsAlign,
             frame,
             "CENTER",
             FpsLatencyMeterConfig.frameFpsX,
@@ -106,7 +123,7 @@ function TT:UpdateFrames()
     if type(FpsLatencyMeterConfig.frameLatencyHomeX) == "number" and type(FpsLatencyMeterConfig.frameLatencyHomeY) == "number" then
         textHomeMS:ClearAllPoints()
         textHomeMS:SetPoint(
-            "CENTER",
+            FpsLatencyMeterConfig.frameLatencyHomeAlign,
             frame,
             "CENTER",
             FpsLatencyMeterConfig.frameLatencyHomeX,
@@ -116,7 +133,7 @@ function TT:UpdateFrames()
     if type(FpsLatencyMeterConfig.frameLatencyWorldX) == "number" and type(FpsLatencyMeterConfig.frameLatencyWorldY) == "number" then
         textWorldMS:ClearAllPoints()
         textWorldMS:SetPoint(
-            "CENTER",
+            FpsLatencyMeterConfig.frameLatencyWorldAlign,
             frame,
             "CENTER",
             FpsLatencyMeterConfig.frameLatencyWorldX,

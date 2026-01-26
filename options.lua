@@ -30,41 +30,88 @@ local FpsLatencyMeterBaseConfig = {
     fontSize = 14,
     frameFpsX = -150,
     frameFpsY = 0,
+    frameFpsAlign = "CENTER",
     frameLatencyHomeX = 0,
     frameLatencyHomeY = 0,
+    frameLatencyHomeAlign = "CENTER",
     frameLatencyWorldX = 170,
     frameLatencyWorldY = 0,
-}
-FpsLatencyMeterConfig = FpsLatencyMeterConfig or {
-    fps = FpsLatencyMeterBaseConfig.fps,
-    latency = FpsLatencyMeterBaseConfig.latency,
-    latencyHome = FpsLatencyMeterBaseConfig.latencyHome,
-    latencyWorld = FpsLatencyMeterBaseConfig.latencyWorld,
-    refreshInterval = FpsLatencyMeterBaseConfig.refreshInterval,
-    changeColor = FpsLatencyMeterBaseConfig.changeColor,
-    highColor = FpsLatencyMeterBaseConfig.highColor,
-    mediumColor = FpsLatencyMeterBaseConfig.mediumColor,
-    lowColor = FpsLatencyMeterBaseConfig.lowColor,
-    fontName = FpsLatencyMeterBaseConfig.fontName,
-    fontSize = FpsLatencyMeterBaseConfig.fontSize,
-    frameFpsX = FpsLatencyMeterBaseConfig.frameFpsX,
-    frameFpsY = FpsLatencyMeterBaseConfig.frameFpsY,
-    frameLatencyHomeX = FpsLatencyMeterBaseConfig.frameLatencyHomeX,
-    frameLatencyHomeY = FpsLatencyMeterBaseConfig.frameLatencyHomeY,
-    frameLatencyWorldX = FpsLatencyMeterBaseConfig.frameLatencyWorldX,
-    frameLatencyWorldY = FpsLatencyMeterBaseConfig.frameLatencyWorldY,
+    frameLatencyWorldAlign = "CENTER",
 }
 
-function TT:ResetPositions()
-    FpsLatencyMeterConfig.frameFpsX = FpsLatencyMeterBaseConfig.frameFpsX
-    FpsLatencyMeterConfig.frameFpsY = FpsLatencyMeterBaseConfig.frameFpsY
-    FpsLatencyMeterConfig.frameLatencyHomeX = FpsLatencyMeterBaseConfig.frameLatencyHomeX
-    FpsLatencyMeterConfig.frameLatencyHomeY = FpsLatencyMeterBaseConfig.frameLatencyHomeY
-    FpsLatencyMeterConfig.frameLatencyWorldX = FpsLatencyMeterBaseConfig.frameLatencyWorldX
-    FpsLatencyMeterConfig.frameLatencyWorldY = FpsLatencyMeterBaseConfig.frameLatencyWorldY
+local function InitConfig()
+    -- Initialize if it doesn't exist
+    FpsLatencyMeterConfig = FpsLatencyMeterConfig or {}
+
+    -- Ensure all default values exist in the config
+    for key, defaultValue in pairs(FpsLatencyMeterBaseConfig) do
+        if FpsLatencyMeterConfig[key] == nil then
+            if type(defaultValue) == "table" then
+                -- For tables (like colors), create a copy
+                FpsLatencyMeterConfig[key] = {}
+                for k, v in pairs(defaultValue) do
+                    FpsLatencyMeterConfig[key][k] = v
+                end
+            else
+                -- For simple values
+                FpsLatencyMeterConfig[key] = defaultValue
+            end
+        end
+    end
+
+    return FpsLatencyMeterConfig
 end
 
-function TT:ResetSettings()
+-- Initialize the configuration
+FpsLatencyMeterConfig = InitConfig()
+
+local f = CreateFrame("Frame")
+f:RegisterEvent("PLAYER_LOGIN")
+f:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+f:SetScript("OnEvent", function(self, event, isInitialLogin, isReloadingUi)
+    if event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" then
+        -- This function copies values from one table into another:
+        local function copyDefaults(src, dst)
+            -- If no source (defaults) is specified, return an empty table:
+            if type(src) ~= "table" then return {} end
+            -- If no target (saved variable) is specified, create a new table:
+            if not type(dst) then dst = {} end
+            -- Loop through the source (defaults):
+            for k, v in pairs(src) do
+                -- If the value is a sub-table:
+                if type(v) == "table" then
+                    -- Recursively call the function:
+                    dst[k] = copyDefaults(v, dst[k])
+                    -- Or if the default value type doesn't match the existing value type:
+                elseif type(v) ~= type(dst[k]) then
+                    -- Overwrite the existing value with the default one:
+                    dst[k] = v
+                end
+            end
+            -- Return the destination table:
+            return dst
+        end
+
+        -- Copy the values from the defaults table into the saved variables table
+        -- if it exists, and assign the result to the saved variable:
+        FpsLatencyMeterConfig = copyDefaults(FpsLatencyMeterBaseConfig, FpsLatencyMeterConfig)
+    end
+end)
+
+local function ResetPositions()
+    FpsLatencyMeterConfig.frameFpsX = FpsLatencyMeterBaseConfig.frameFpsX
+    FpsLatencyMeterConfig.frameFpsY = FpsLatencyMeterBaseConfig.frameFpsY
+    FpsLatencyMeterConfig.frameFpsAlign = FpsLatencyMeterBaseConfig.frameFpsAlign
+    FpsLatencyMeterConfig.frameLatencyHomeX = FpsLatencyMeterBaseConfig.frameLatencyHomeX
+    FpsLatencyMeterConfig.frameLatencyHomeY = FpsLatencyMeterBaseConfig.frameLatencyHomeY
+    FpsLatencyMeterConfig.frameLatencyHomeAlign = FpsLatencyMeterBaseConfig.frameLatencyHomeAlign
+    FpsLatencyMeterConfig.frameLatencyWorldX = FpsLatencyMeterBaseConfig.frameLatencyWorldX
+    FpsLatencyMeterConfig.frameLatencyWorldY = FpsLatencyMeterBaseConfig.frameLatencyWorldY
+    FpsLatencyMeterConfig.frameLatencyWorldAlign = FpsLatencyMeterBaseConfig.frameLatencyWorldAlign
+end
+
+local function ResetSettings()
     FpsLatencyMeterConfig.fps = FpsLatencyMeterBaseConfig.fps
     FpsLatencyMeterConfig.latency = FpsLatencyMeterBaseConfig.latency
     FpsLatencyMeterConfig.latencyHome = FpsLatencyMeterBaseConfig.latencyHome
@@ -79,7 +126,7 @@ function TT:ResetSettings()
 end
 
 local function ResetCfg()
-    TT:ResetSettings()
+    ResetSettings()
     local settingsToUpdate = {
         "fps",
         "latency",
@@ -96,10 +143,6 @@ local function ResetCfg()
     for _, variable in ipairs(settingsToUpdate) do
         Settings.NotifyUpdate(variable)
     end
-end
-
-if not FpsLatencyMeterConfig then
-    ResetCfg()
 end
 
 local function GetPositionLimits()
@@ -153,6 +196,43 @@ local function Register()
                 end
             end,
             desc = desc,
+        })
+        return initializer, setting
+    end
+
+    local function CreateParentedScrollDown(tbdb, tbvar, map, parent, prefix, key, name, default, height, set, desc)
+        local initializer, setting = SettingsLib:CreateScrollDropdown(category, {
+            parentSection = parent,
+            prefix = prefix,
+            key = key,
+            name = name,
+            default = default,
+            height = height,
+            get = function()
+                return map[tbdb[tbvar]]
+            end,
+            set = function(value)
+                tbdb[tbvar] = value
+                if set then
+                    set()
+                end
+            end,
+            desc = "Select the alignment of the text",
+            generator = function(dropdown, rootDescription)
+                local index = 1
+                for key, label in pairs(map) do
+                    local button = rootDescription:CreateRadio(label, function()
+                        return tbdb[tbvar] == key
+                    end, function()
+                        tbdb[tbvar] = key
+                        if set then
+                            set()
+                        end
+                        dropdown:SetText(label)
+                    end)
+                    index = index + 1
+                end
+            end,
         })
         return initializer, setting
     end
@@ -251,6 +331,24 @@ local function Register()
         initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
     end
 
+    local alignmentsMap = {
+        ["LEFT"] = "Right",
+        ["CENTER"] = "Center",
+        ["RIGHT"] = "Left",
+    }
+    do
+        local initializer, setting = CreateParentedScrollDown(FpsLatencyMeterConfig, "frameFpsAlign", alignmentsMap,
+            enableFeaturesSection, "FPS_", "fps_text_align", "Alignment", FpsLatencyMeterBaseConfig.frameFpsAlign, 220,
+            TT:UpdateFrames(), "Select the alignment of the text")
+        initializer:AddShownPredicate(function() return fpsSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.fps
+        end
+
+        initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
     -- Latency
     local latencySetting, latencyInitializer
     do
@@ -319,7 +417,20 @@ local function Register()
             enableFeaturesSection, "MS_", "ms_home_y_offset", "Home MS: Y Offset",
             FpsLatencyMeterBaseConfig.frameLatencyHomeY, minValueY, maxValueY, 1,
             TT:UpdateFrames(), "Position of the text in Y axis")
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyHomeSetting:GetValue() end)
 
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyHome
+        end
+
+        initializer:SetParentInitializer(latencyHomeInitializer,
+            latencyHomeInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    do
+        local initializer, setting = CreateParentedScrollDown(FpsLatencyMeterConfig, "frameLatencyHomeAlign",
+            alignmentsMap, enableFeaturesSection, "MS_", "ms_home_text_align", "Alignment",
+            FpsLatencyMeterBaseConfig.frameLatencyHomeAlign, 220, TT:UpdateFrames(), "Select the alignment of the text")
         initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyHomeSetting:GetValue() end)
 
         local function IsSectionEnabled()
@@ -378,6 +489,20 @@ local function Register()
             enableFeaturesSection, "MS_", "ms_world_y_offset", "World MS: Y Offset",
             FpsLatencyMeterBaseConfig.frameLatencyWorldY, minValueY, maxValueY, 1,
             TT:UpdateFrames(), "Position of the text in Y axis")
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyWorld
+        end
+
+        initializer:SetParentInitializer(latencyWorldInitializer,
+            latencyWorldInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    do
+        local initializer, setting = CreateParentedScrollDown(FpsLatencyMeterConfig, "frameLatencyWorldAlign",
+            alignmentsMap, enableFeaturesSection, "MS_", "ms_world_text_align", "Alignment",
+            FpsLatencyMeterBaseConfig.frameLatencyWorldAlign, 220, TT:UpdateFrames(), "Select the alignment of the text")
         initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
 
         local function IsSectionEnabled()
@@ -550,7 +675,7 @@ end
 SettingsRegistrar:AddRegistrant(Register)
 
 local function ActionResetPositions()
-    TT:ResetPositions()
+    ResetPositions()
     print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Positions have been reset to default.")
 end
 

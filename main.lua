@@ -61,7 +61,7 @@ frame:SetScript("OnUpdate", function(self, elapsed)
     self.timer = (self.timer or 0) + elapsed
     if self.timer >= FpsLatencyMeterConfig.refreshInterval then
         local fps = floor(GetFramerate())
-        local _, _, homeMS, worldMS = GetNetStats()
+        local bandWidthIn, bandWidthOut, homeMS, worldMS = GetNetStats()
         if FpsLatencyMeterConfig.fps then
             if FpsLatencyMeterConfig.changeColor then
                 local colorCode = GetColorCodeFps(fps)

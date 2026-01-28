@@ -369,6 +369,31 @@ local function Register()
         initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
     end
 
+    do
+        local initializer, setting = SettingsLib:CreateInput(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "FPS_",
+            key = "fps_text_content",
+            name = "Content",
+            default = FpsLatencyMeterBaseConfig.contentFPS,
+            get = function()
+                return FpsLatencyMeterConfig.contentFPS
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.contentFPS = value
+                TT:UpdateFrames()
+            end,
+            desc = "Set the content of the displayed text",
+        })
+        initializer:AddShownPredicate(function() return fpsSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.fps
+        end
+
+        initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
     -- Latency
     local latencySetting, latencyInitializer
     do

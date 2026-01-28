@@ -12,6 +12,13 @@ local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
 _G[addOnName] = {}
 local TT = _G[addOnName]
 
+local SupportedExpansions = {
+    [1] = "Classic",
+    [2] = "The Burning Crusade",
+    [5] = "Mists of Pandaria",
+    [12] = "Midnight",
+}
+
 function TT:IsRetail()
     return majorVersion >= 12 -- Midnight
 end
@@ -26,6 +33,9 @@ local FpsLatencyMeterBaseConfig = {
     highColor = { 0.90588218115667, 0.29803922772408, 0.23529413312476, 1 },
     mediumColor = { 0.94509810209274, 0.76862752437592, 0.058823533535519, 1 },
     lowColor = { 0.1803921610117, 0.80000007152557, 0.44313728809357, 1 },
+    contentFPS = "# FPS",
+    contentHomeMS = "# ms (Home)",
+    contentWorldMS = "# ms (World)",
     fontName = "Friz Quadrata TT",
     fontSize = 14,
     frameFpsX = -150,
@@ -123,6 +133,9 @@ local function ResetSettings()
     FpsLatencyMeterConfig.lowColor = FpsLatencyMeterBaseConfig.lowColor
     FpsLatencyMeterConfig.fontName = FpsLatencyMeterBaseConfig.fontName
     FpsLatencyMeterConfig.fontSize = FpsLatencyMeterBaseConfig.fontSize
+    FpsLatencyMeterConfig.contentFPS = FpsLatencyMeterBaseConfig.contentFPS
+    FpsLatencyMeterConfig.contentHomeMS = FpsLatencyMeterBaseConfig.contentHomeMS
+    FpsLatencyMeterConfig.contentWorldMS = FpsLatencyMeterBaseConfig.contentWorldMS
 end
 
 local function ResetCfg()
@@ -139,6 +152,9 @@ local function ResetCfg()
         "lowColor",
         "fontName",
         "fontSize",
+        "contentFPS",
+        "contentHomeMS",
+        "contentWorldMS",
     }
     for _, variable in ipairs(settingsToUpdate) do
         Settings.NotifyUpdate(variable)
@@ -240,8 +256,12 @@ local function Register()
     --------------------------------------------------------------------------------
     -- HEADER SECTION
     --------------------------------------------------------------------------------
+    local name = "Version " .. addOnVersion
+    if SupportedExpansions[majorVersion] then
+        name = name .. " for " .. SupportedExpansions[majorVersion]
+    end
     SettingsLib:CreateHeader(category, {
-        name = "Version " .. addOnVersion,
+        name = name,
     })
     SettingsLib:CreateText(category, {
         name =

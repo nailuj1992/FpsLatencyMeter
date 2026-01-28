@@ -82,26 +82,30 @@ frame:SetScript("OnUpdate", function(self, elapsed)
         if FpsLatencyMeterConfig.fps then
             if FpsLatencyMeterConfig.changeColor then
                 local colorCode = GetColorCodeFps(fps)
-                textFPS:SetText(string.format("%s%d|r FPS", colorCode, fps))
+                textFPS:SetText(string.format(string.gsub(FpsLatencyMeterConfig.contentFPS, "#", "%%s%%d|r"), colorCode,
+                    fps))
             else
-                textFPS:SetText(string.format("%d FPS", fps))
+                textFPS:SetText(string.format(string.gsub(FpsLatencyMeterConfig.contentFPS, "#", "%%d"), fps))
             end
         end
         if FpsLatencyMeterConfig.latency then
             if FpsLatencyMeterConfig.latencyHome then
                 if FpsLatencyMeterConfig.changeColor then
                     local colorCode = GetColorCodeMs(homeMS)
-                    textHomeMS:SetText(string.format("%s%d|r ms (Home)", colorCode, homeMS))
+                    textHomeMS:SetText(string.format(string.gsub(FpsLatencyMeterConfig.contentHomeMS, "#", "%%s%%d|r"),
+                        colorCode, homeMS))
                 else
-                    textHomeMS:SetText(string.format("%d ms (Home)", homeMS))
+                    textHomeMS:SetText(string.format(string.gsub(FpsLatencyMeterConfig.contentHomeMS, "#", "%%d"), homeMS))
                 end
             end
             if FpsLatencyMeterConfig.latencyWorld then
                 if FpsLatencyMeterConfig.changeColor then
                     local colorCode = GetColorCodeMs(worldMS)
-                    textWorldMS:SetText(string.format("%s%d|r ms (World)", colorCode, worldMS))
+                    textWorldMS:SetText(string.format(string.gsub(FpsLatencyMeterConfig.contentWorldMS, "#", "%%s%%d|r"),
+                    colorCode, worldMS))
                 else
-                    textWorldMS:SetText(string.format("%d ms (World)", worldMS))
+                    textWorldMS:SetText(string.format(string.gsub(FpsLatencyMeterConfig.contentWorldMS, "#", "%%d"),
+                        worldMS))
                 end
             end
         end

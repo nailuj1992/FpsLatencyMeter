@@ -735,7 +735,7 @@ local function Register()
     end
 
     -- Color pickers
-    if TT:IsRetail() then
+    if true then--TT:IsRetail() then
         local colorData = {
             {
                 label = "High Color (< 15 fps, > 200 ms)",

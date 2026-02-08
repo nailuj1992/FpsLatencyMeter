@@ -706,6 +706,16 @@ local function Register()
     -- Changing Color checkbox
     local changeColorSetting, colorPickersSetting
     local colorDescription = "Changes the color of the text according to the selected one below"
+    if not LibStub.EditModeManagerFrame or not (LibStub.Enum and LibStub.Enum.EditModeSettingDisplayType) then
+        colorDescription =
+            "Changes the color of the text, depending on the FPS and MS.\n\n"
+            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.highColor[1], FpsLatencyMeterConfig.highColor[2],
+                FpsLatencyMeterConfig.highColor[3]) .. "Red for < 15 fps or > 200 ms|r\n\n"
+            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.mediumColor[1], FpsLatencyMeterConfig.mediumColor[2],
+                FpsLatencyMeterConfig.mediumColor[3]) .. "Yellow for < 30 fps or > 100 ms|r\n\n"
+            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.lowColor[1], FpsLatencyMeterConfig.lowColor[2],
+                FpsLatencyMeterConfig.lowColor[3]) .. "Green for > 30 fps or < 100 ms|r"
+    end
     do
         colorPickersSetting, changeColorSetting = SettingsLib:CreateCheckbox(category, {
             parentSection = otherSection,
@@ -740,32 +750,27 @@ local function Register()
         },
     }
     do
-        local ok, result = pcall(function()
-            return SettingsLib:CreateColorOverrides(category, {
-                parentSection = otherSection,
-                prefix = "FPS_MS_",
-                entries = colorData,
-                hasOpacity = false,
-                getColor = function(key)
-                    local color = FpsLatencyMeterConfig[key] or FpsLatencyMeterBaseConfig[key]
-                    return color[1], color[2], color[3], color[4]
-                end,
-                setColor = function(key, r, g, b, a)
-                    local value = { r, g, b, a or 1 }
-                    FpsLatencyMeterConfig[key] = value
-                    TT:UpdateFrames()
-                end,
-                getDefaultColor = function(key)
-                    local color = FpsLatencyMeterBaseConfig[key]
-                    return color[1], color[2], color[3], color[4]
-                end,
-                colorizeLabel = true
-            })
-        end)
-        if ok and result then
-            colorPickersSetting = result
-            colorPickersSetting:AddShownPredicate(function() return changeColorSetting:GetValue() end)
-        end
+        colorPickersSetting = SettingsLib:CreateColorOverrides(category, {
+            parentSection = otherSection,
+            prefix = "FPS_MS_",
+            entries = colorData,
+            hasOpacity = false,
+            getColor = function(key)
+                local color = FpsLatencyMeterConfig[key] or FpsLatencyMeterBaseConfig[key]
+                return color[1], color[2], color[3], color[4]
+            end,
+            setColor = function(key, r, g, b, a)
+                local value = { r, g, b, a or 1 }
+                FpsLatencyMeterConfig[key] = value
+                TT:UpdateFrames()
+            end,
+            getDefaultColor = function(key)
+                local color = FpsLatencyMeterBaseConfig[key]
+                return color[1], color[2], color[3], color[4]
+            end,
+            colorizeLabel = true
+        })
+        colorPickersSetting:AddShownPredicate(function() return changeColorSetting:GetValue() end)
     end
 
     Settings.RegisterAddOnCategory(category)

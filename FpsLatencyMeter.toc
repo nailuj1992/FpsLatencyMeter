@@ -1,10 +1,11 @@
 ## Interface: 11508,20505,50500,50501,50502,50503,50504,120000,120001,120002
-## Version: 0.2.13
+## Version: 0.2.131-beta
 ## Title: FPS & Latency Meter
 ## Notes: Shows the current FPS and latency of the client.
 ## AddonCompartmentFunc: OpenFpsLatencySettings
 ## Author: Nailuj1992
 ## SavedVariables: FpsLatencyMeterConfig
+## X-Curse-Project-ID: 1321145
 
 #@no-lib-strip@
 embeds.xml

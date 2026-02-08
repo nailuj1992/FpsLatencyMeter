@@ -1,0 +1,22 @@
+package-as: FpsLatencyMeter
+
+externals:
+  Libs/LibStub:
+    url: https://repos.wowace.com/wow/libstub/tags/1.0
+  Libs/CallbackHandler-1.0:
+    url: https://repos.wowace.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+  Libs/LibSharedMedia-3.0:
+    url: https://repos.wowace.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
+  Libs/LibChangelog:
+    url: https://github.com/BullseiWoWAddons/LibChangelog.git
+  Libs/LibEQOL:
+    url: https://github.com/R41z0r/LibEQOL.git
+  Libs/UTF8:
+    url: https://github.com/Road-block/UTF8.git
+
+ignore:
+  - README.md
+  - LICENSE
+  - .github
+
+enable-nolib-creation: yes

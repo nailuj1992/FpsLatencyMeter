@@ -12,6 +12,13 @@ local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
 _G[addOnName] = {}
 local TT = _G[addOnName]
 
+local SupportedExpansions = {
+    [1] = "Classic",
+    [2] = "The Burning Crusade",
+    [5] = "Mists of Pandaria",
+    [12] = "Midnight",
+}
+
 function TT:IsRetail()
     return majorVersion >= 12 -- Midnight
 end
@@ -26,6 +33,9 @@ local FpsLatencyMeterBaseConfig = {
     highColor = { 0.90588218115667, 0.29803922772408, 0.23529413312476, 1 },
     mediumColor = { 0.94509810209274, 0.76862752437592, 0.058823533535519, 1 },
     lowColor = { 0.1803921610117, 0.80000007152557, 0.44313728809357, 1 },
+    contentFPS = "# FPS",
+    contentHomeMS = "# ms (Home)",
+    contentWorldMS = "# ms (World)",
     fontName = "Friz Quadrata TT",
     fontSize = 14,
     frameFpsX = -150,
@@ -123,6 +133,9 @@ local function ResetSettings()
     FpsLatencyMeterConfig.lowColor = FpsLatencyMeterBaseConfig.lowColor
     FpsLatencyMeterConfig.fontName = FpsLatencyMeterBaseConfig.fontName
     FpsLatencyMeterConfig.fontSize = FpsLatencyMeterBaseConfig.fontSize
+    FpsLatencyMeterConfig.contentFPS = FpsLatencyMeterBaseConfig.contentFPS
+    FpsLatencyMeterConfig.contentHomeMS = FpsLatencyMeterBaseConfig.contentHomeMS
+    FpsLatencyMeterConfig.contentWorldMS = FpsLatencyMeterBaseConfig.contentWorldMS
 end
 
 local function ResetCfg()
@@ -139,6 +152,9 @@ local function ResetCfg()
         "lowColor",
         "fontName",
         "fontSize",
+        "contentFPS",
+        "contentHomeMS",
+        "contentWorldMS",
     }
     for _, variable in ipairs(settingsToUpdate) do
         Settings.NotifyUpdate(variable)
@@ -240,8 +256,12 @@ local function Register()
     --------------------------------------------------------------------------------
     -- HEADER SECTION
     --------------------------------------------------------------------------------
+    local name = "Version " .. addOnVersion
+    if SupportedExpansions[majorVersion] then
+        name = name .. " for " .. SupportedExpansions[majorVersion]
+    end
     SettingsLib:CreateHeader(category, {
-        name = "Version " .. addOnVersion,
+        name = name,
     })
     SettingsLib:CreateText(category, {
         name =
@@ -349,6 +369,34 @@ local function Register()
         initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
     end
 
+    do
+        local initializer, setting = SettingsLib:CreateInput(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "FPS_",
+            key = "fps_text_content",
+            name = "Content",
+            default = FpsLatencyMeterBaseConfig.contentFPS,
+            get = function()
+                return FpsLatencyMeterConfig.contentFPS
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.contentFPS = value
+                TT:UpdateFrames()
+            end,
+            desc = "Set the content of the displayed text",
+            readonly = false,
+            selectAllOnFocus = false,
+            multiline = false,
+        })
+        initializer:AddShownPredicate(function() return fpsSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.fps
+        end
+
+        initializer:SetParentInitializer(fpsInitializer, fpsInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
     -- Latency
     local latencySetting, latencyInitializer
     do
@@ -441,6 +489,35 @@ local function Register()
             latencyHomeInitializer.IsSectionEnabled or IsSectionEnabled)
     end
 
+    do
+        local initializer, setting = SettingsLib:CreateInput(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "MS_",
+            key = "ms_home_text_content",
+            name = "Content",
+            default = FpsLatencyMeterBaseConfig.contentHomeMS,
+            get = function()
+                return FpsLatencyMeterConfig.contentHomeMS
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.contentHomeMS = value
+                TT:UpdateFrames()
+            end,
+            desc = "Set the content of the displayed text",
+            readonly = false,
+            selectAllOnFocus = false,
+            multiline = false,
+        })
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyHomeSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyHome
+        end
+
+        initializer:SetParentInitializer(latencyHomeInitializer,
+            latencyHomeInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
     -- Latency World
     local latencyWorldSetting, latencyWorldInitializer
     do
@@ -503,6 +580,35 @@ local function Register()
         local initializer, setting = CreateParentedScrollDown(FpsLatencyMeterConfig, "frameLatencyWorldAlign",
             alignmentsMap, enableFeaturesSection, "MS_", "ms_world_text_align", "Alignment",
             FpsLatencyMeterBaseConfig.frameLatencyWorldAlign, 220, TT:UpdateFrames(), "Select the alignment of the text")
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyWorld
+        end
+
+        initializer:SetParentInitializer(latencyWorldInitializer,
+            latencyWorldInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    do
+        local initializer, setting = SettingsLib:CreateInput(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "MS_",
+            key = "ms_world_text_content",
+            name = "Content",
+            default = FpsLatencyMeterBaseConfig.contentWorldMS,
+            get = function()
+                return FpsLatencyMeterConfig.contentWorldMS
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.contentWorldMS = value
+                TT:UpdateFrames()
+            end,
+            desc = "Set the content of the displayed text",
+            readonly = false,
+            selectAllOnFocus = false,
+            multiline = false,
+        })
         initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
 
         local function IsSectionEnabled()
@@ -600,16 +706,6 @@ local function Register()
     -- Changing Color checkbox
     local changeColorSetting, colorPickersSetting
     local colorDescription = "Changes the color of the text according to the selected one below"
-    if not TT:IsRetail() then
-        colorDescription =
-            "Changes the color of the text, depending on the FPS and MS.\n\n"
-            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.highColor[1], FpsLatencyMeterConfig.highColor[2],
-                FpsLatencyMeterConfig.highColor[3]) .. "Red for < 15 fps or > 200 ms|r\n\n"
-            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.mediumColor[1], FpsLatencyMeterConfig.mediumColor[2],
-                FpsLatencyMeterConfig.mediumColor[3]) .. "Yellow for < 30 fps or > 100 ms|r\n\n"
-            .. TT:ToWoWColorCode(FpsLatencyMeterConfig.lowColor[1], FpsLatencyMeterConfig.lowColor[2],
-                FpsLatencyMeterConfig.lowColor[3]) .. "Green for > 30 fps or < 100 ms|r"
-    end
     do
         colorPickersSetting, changeColorSetting = SettingsLib:CreateCheckbox(category, {
             parentSection = otherSection,
@@ -629,44 +725,42 @@ local function Register()
     end
 
     -- Color pickers
-    if TT:IsRetail() then
-        local colorData = {
-            {
-                label = "High Color (< 15 fps, > 200 ms)",
-                key = "highColor",
-            },
-            {
-                label = "Medium Color (< 30 fps, > 100 ms)",
-                key = "mediumColor",
-            },
-            {
-                label = "Low Color (> 30 fps, < 100 ms)",
-                key = "lowColor",
-            },
-        }
-        do
-            colorPickersSetting = SettingsLib:CreateColorOverrides(category, {
-                parentSection = otherSection,
-                prefix = "FPS_MS_",
-                entries = colorData,
-                hasOpacity = false,
-                getColor = function(key)
-                    local color = FpsLatencyMeterConfig[key] or FpsLatencyMeterBaseConfig[key]
-                    return color[1], color[2], color[3], color[4]
-                end,
-                setColor = function(key, r, g, b, a)
-                    local value = { r, g, b, a or 1 }
-                    FpsLatencyMeterConfig[key] = value
-                    TT:UpdateFrames()
-                end,
-                getDefaultColor = function(key)
-                    local color = FpsLatencyMeterBaseConfig[key]
-                    return color[1], color[2], color[3], color[4]
-                end,
-                colorizeLabel = true
-            })
-            colorPickersSetting:AddShownPredicate(function() return changeColorSetting:GetValue() end)
-        end
+    local colorData = {
+        {
+            label = "High Color (< 15 fps, > 200 ms)",
+            key = "highColor",
+        },
+        {
+            label = "Medium Color (< 30 fps, > 100 ms)",
+            key = "mediumColor",
+        },
+        {
+            label = "Low Color (> 30 fps, < 100 ms)",
+            key = "lowColor",
+        },
+    }
+    do
+        colorPickersSetting = SettingsLib:CreateColorOverrides(category, {
+            parentSection = otherSection,
+            prefix = "FPS_MS_",
+            entries = colorData,
+            hasOpacity = false,
+            getColor = function(key)
+                local color = FpsLatencyMeterConfig[key] or FpsLatencyMeterBaseConfig[key]
+                return color[1], color[2], color[3], color[4]
+            end,
+            setColor = function(key, r, g, b, a)
+                local value = { r, g, b, a or 1 }
+                FpsLatencyMeterConfig[key] = value
+                TT:UpdateFrames()
+            end,
+            getDefaultColor = function(key)
+                local color = FpsLatencyMeterBaseConfig[key]
+                return color[1], color[2], color[3], color[4]
+            end,
+            colorizeLabel = true
+        })
+        colorPickersSetting:AddShownPredicate(function() return changeColorSetting:GetValue() end)
     end
 
     Settings.RegisterAddOnCategory(category)

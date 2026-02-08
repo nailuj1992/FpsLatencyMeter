@@ -384,6 +384,9 @@ local function Register()
                 TT:UpdateFrames()
             end,
             desc = "Set the content of the displayed text",
+            readonly = false,
+            selectAllOnFocus = false,
+            multiline = false,
         })
         initializer:AddShownPredicate(function() return fpsSetting:GetValue() end)
 
@@ -486,6 +489,35 @@ local function Register()
             latencyHomeInitializer.IsSectionEnabled or IsSectionEnabled)
     end
 
+    do
+        local initializer, setting = SettingsLib:CreateInput(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "MS_",
+            key = "ms_home_text_content",
+            name = "Content",
+            default = FpsLatencyMeterBaseConfig.contentHomeMS,
+            get = function()
+                return FpsLatencyMeterConfig.contentHomeMS
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.contentHomeMS = value
+                TT:UpdateFrames()
+            end,
+            desc = "Set the content of the displayed text",
+            readonly = false,
+            selectAllOnFocus = false,
+            multiline = false,
+        })
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyHomeSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyHome
+        end
+
+        initializer:SetParentInitializer(latencyHomeInitializer,
+            latencyHomeInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
     -- Latency World
     local latencyWorldSetting, latencyWorldInitializer
     do
@@ -548,6 +580,35 @@ local function Register()
         local initializer, setting = CreateParentedScrollDown(FpsLatencyMeterConfig, "frameLatencyWorldAlign",
             alignmentsMap, enableFeaturesSection, "MS_", "ms_world_text_align", "Alignment",
             FpsLatencyMeterBaseConfig.frameLatencyWorldAlign, 220, TT:UpdateFrames(), "Select the alignment of the text")
+        initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
+
+        local function IsSectionEnabled()
+            return FpsLatencyMeterBaseConfig.latency and FpsLatencyMeterBaseConfig.latencyWorld
+        end
+
+        initializer:SetParentInitializer(latencyWorldInitializer,
+            latencyWorldInitializer.IsSectionEnabled or IsSectionEnabled)
+    end
+
+    do
+        local initializer, setting = SettingsLib:CreateInput(category, {
+            parentSection = enableFeaturesSection,
+            prefix = "MS_",
+            key = "ms_world_text_content",
+            name = "Content",
+            default = FpsLatencyMeterBaseConfig.contentWorldMS,
+            get = function()
+                return FpsLatencyMeterConfig.contentWorldMS
+            end,
+            set = function(value)
+                FpsLatencyMeterConfig.contentWorldMS = value
+                TT:UpdateFrames()
+            end,
+            desc = "Set the content of the displayed text",
+            readonly = false,
+            selectAllOnFocus = false,
+            multiline = false,
+        })
         initializer:AddShownPredicate(function() return latencySetting:GetValue() and latencyWorldSetting:GetValue() end)
 
         local function IsSectionEnabled()

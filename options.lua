@@ -740,27 +740,32 @@ local function Register()
         },
     }
     do
-        colorPickersSetting = SettingsLib:CreateColorOverrides(category, {
-            parentSection = otherSection,
-            prefix = "FPS_MS_",
-            entries = colorData,
-            hasOpacity = false,
-            getColor = function(key)
-                local color = FpsLatencyMeterConfig[key] or FpsLatencyMeterBaseConfig[key]
-                return color[1], color[2], color[3], color[4]
-            end,
-            setColor = function(key, r, g, b, a)
-                local value = { r, g, b, a or 1 }
-                FpsLatencyMeterConfig[key] = value
-                TT:UpdateFrames()
-            end,
-            getDefaultColor = function(key)
-                local color = FpsLatencyMeterBaseConfig[key]
-                return color[1], color[2], color[3], color[4]
-            end,
-            colorizeLabel = true
-        })
-        colorPickersSetting:AddShownPredicate(function() return changeColorSetting:GetValue() end)
+        local ok, result = pcall(function()
+            return SettingsLib:CreateColorOverrides(category, {
+                parentSection = otherSection,
+                prefix = "FPS_MS_",
+                entries = colorData,
+                hasOpacity = false,
+                getColor = function(key)
+                    local color = FpsLatencyMeterConfig[key] or FpsLatencyMeterBaseConfig[key]
+                    return color[1], color[2], color[3], color[4]
+                end,
+                setColor = function(key, r, g, b, a)
+                    local value = { r, g, b, a or 1 }
+                    FpsLatencyMeterConfig[key] = value
+                    TT:UpdateFrames()
+                end,
+                getDefaultColor = function(key)
+                    local color = FpsLatencyMeterBaseConfig[key]
+                    return color[1], color[2], color[3], color[4]
+                end,
+                colorizeLabel = true
+            })
+        end)
+        if ok and result then
+            colorPickersSetting = result
+            colorPickersSetting:AddShownPredicate(function() return changeColorSetting:GetValue() end)
+        end
     end
 
     Settings.RegisterAddOnCategory(category)

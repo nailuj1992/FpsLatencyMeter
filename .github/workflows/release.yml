@@ -18,10 +18,6 @@ jobs:
         run: |
           git fetch --tags --force
 
-      - name: Hack around https://github.com/actions/checkout/issues/290
-        run: |
-          git fetch --tags --force
-
       # - name: Install LibEQOL
       #   uses: R41z0r/LibEQOL@v1.0.0
       #   with:

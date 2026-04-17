@@ -13,5 +13,10 @@ externals:
 
 ignore:
   - README.md
+  - CHANGELOG.md
   - LICENSE
   - .github
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown

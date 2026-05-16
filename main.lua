@@ -18,7 +18,10 @@ textFPS:SetPoint(
     FpsLatencyMeterConfig.frameFpsY
 )
 textFPS:SetTextColor(1, 1, 1)
-textFPS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
+local initFontPath = fonts[FpsLatencyMeterConfig.fontName] or LSM:GetDefault(LSM.MediaType.FONT)
+if initFontPath then
+    textFPS:SetFont(initFontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
+end
 
 local textHomeMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
 textHomeMS:SetPoint(
@@ -30,7 +33,9 @@ textHomeMS:SetPoint(
     FpsLatencyMeterConfig.frameLatencyHomeY
 )
 textHomeMS:SetTextColor(1, 1, 1)
-textHomeMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
+if initFontPath then
+    textHomeMS:SetFont(initFontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
+end
 
 local textWorldMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
 textWorldMS:SetPoint(
@@ -41,7 +46,9 @@ textWorldMS:SetPoint(
     FpsLatencyMeterConfig.frameLatencyWorldY
 )
 textWorldMS:SetTextColor(1, 1, 1)
-textWorldMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
+if initFontPath then
+    textWorldMS:SetFont(initFontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
+end
 
 function TT:ToWoWColorCode(r, g, b, a)
     return string.format("|cFF%02X%02X%02X", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
@@ -146,9 +153,12 @@ function TT:UpdateFrames()
     end
 
     if type(FpsLatencyMeterConfig.fontSize) == "number" and FpsLatencyMeterConfig.fontName then
-        textFPS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
-        textHomeMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
-        textWorldMS:SetFont(fonts[FpsLatencyMeterConfig.fontName], FpsLatencyMeterConfig.fontSize, "OUTLINE")
+        local fontPath = fonts[FpsLatencyMeterConfig.fontName] or LSM:GetDefault(LSM.MediaType.FONT)
+        if fontPath then
+            textFPS:SetFont(fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
+            textHomeMS:SetFont(fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
+            textWorldMS:SetFont(fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
+        end
     end
 
     if FpsLatencyMeterConfig.fps then

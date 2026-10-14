@@ -1,10 +1,13 @@
 local addOnName = ...
-GetAddOnMetadata = C_AddOns.GetAddOnMetadata
+local GetAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
 local addOnVersion = GetAddOnMetadata(addOnName, "Version") or "0.0.1"
 local addOnTitle = GetAddOnMetadata(addOnName, "Title") or "FpsLatencyMeter"
 
-local clientVersionString = GetBuildInfo()
+local clientVersionString, _, _, interfaceVersion = GetBuildInfo()
 local majorVersion = tonumber(string.match(clientVersionString, "^(%d+)%.?%d*"))
+-- WoW Forever reports a 1.x build (e.g. 1.60.1 -> 16001), so it can't be told apart by major version alone
+local isForever = (WOW_PROJECT_CAMELOT and WOW_PROJECT_ID == WOW_PROJECT_CAMELOT)
+    or (interfaceVersion and interfaceVersion > 16000 and interfaceVersion < 20000)
 
 local SettingsLib = LibStub and LibStub("LibEQOLSettingsMode-1.0", true)
 local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
@@ -257,7 +260,9 @@ local function Register()
     -- HEADER SECTION
     --------------------------------------------------------------------------------
     local name = "Version " .. addOnVersion
-    if SupportedExpansions[majorVersion] then
+    if isForever then
+        name = name .. " for WoW Forever"
+    elseif SupportedExpansions[majorVersion] then
         name = name .. " for " .. SupportedExpansions[majorVersion]
     end
     SettingsLib:CreateHeader(category, {

@@ -2,6 +2,8 @@
 
 WoW addon to show FPS and latency information in real time. _It's supported for WoW Retail (Midnight), Mists of Pandaria Classic, Burning Crusade Classic Anniversary, and Classic era._
 
+**Download:** [FPS & Latency Meter on CurseForge](https://www.curseforge.com/wow/addons/fps-latency-meter)
+
 ### \- Features -
 
 *   Show FPS indicator

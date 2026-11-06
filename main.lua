@@ -5,6 +5,32 @@ local fonts = LSM:HashTable(LSM.MediaType.FONT)
 
 local TT = _G[addOnName]
 
+-- Resolve a LibSharedMedia font name to a file path. The saved font may come from another
+-- addon that isn't loaded on this client, and LSM:GetDefault returns a font *name*, not a path.
+local function ResolveFontPath(fontName)
+    local path = fontName and fonts[fontName]
+    if not path then
+        local defaultName = LSM:GetDefault(LSM.MediaType.FONT)
+        path = defaultName and fonts[defaultName]
+    end
+    return path or STANDARD_TEXT_FONT
+end
+
+local appliedFontPath, appliedFontSize
+local function ApplyFont(fontStrings, fontName, fontSize)
+    local fontPath = ResolveFontPath(fontName)
+    if fontPath == appliedFontPath and fontSize == appliedFontSize then
+        return
+    end
+    for _, fontString in ipairs(fontStrings) do
+        if not fontString:SetFont(fontPath, fontSize, "OUTLINE") then
+            fontPath = STANDARD_TEXT_FONT
+            fontString:SetFont(fontPath, fontSize, "OUTLINE")
+        end
+    end
+    appliedFontPath, appliedFontSize = fontPath, fontSize
+end
+
 local frame = CreateFrame("Frame", nil, UIParent)
 frame:SetSize(GetScreenWidth(), GetScreenHeight())
 frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
@@ -18,10 +44,6 @@ textFPS:SetPoint(
     FpsLatencyMeterConfig.frameFpsY
 )
 textFPS:SetTextColor(1, 1, 1)
-local initFontPath = fonts[FpsLatencyMeterConfig.fontName] or LSM:GetDefault(LSM.MediaType.FONT)
-if initFontPath then
-    textFPS:SetFont(initFontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
-end
 
 local textHomeMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
 textHomeMS:SetPoint(
@@ -33,9 +55,6 @@ textHomeMS:SetPoint(
     FpsLatencyMeterConfig.frameLatencyHomeY
 )
 textHomeMS:SetTextColor(1, 1, 1)
-if initFontPath then
-    textHomeMS:SetFont(initFontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
-end
 
 local textWorldMS = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalOutline")
 textWorldMS:SetPoint(
@@ -46,9 +65,9 @@ textWorldMS:SetPoint(
     FpsLatencyMeterConfig.frameLatencyWorldY
 )
 textWorldMS:SetTextColor(1, 1, 1)
-if initFontPath then
-    textWorldMS:SetFont(initFontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
-end
+
+local allTexts = { textFPS, textHomeMS, textWorldMS }
+ApplyFont(allTexts, FpsLatencyMeterConfig.fontName, FpsLatencyMeterConfig.fontSize)
 
 function TT:ToWoWColorCode(r, g, b, a)
     return string.format("|cFF%02X%02X%02X", (r or 1) * 255, (g or 1) * 255, (b or 1) * 255)
@@ -152,13 +171,8 @@ function TT:UpdateFrames()
         )
     end
 
-    if type(FpsLatencyMeterConfig.fontSize) == "number" and FpsLatencyMeterConfig.fontName then
-        local fontPath = fonts[FpsLatencyMeterConfig.fontName] or LSM:GetDefault(LSM.MediaType.FONT)
-        if fontPath then
-            textFPS:SetFont(fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
-            textHomeMS:SetFont(fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
-            textWorldMS:SetFont(fontPath, FpsLatencyMeterConfig.fontSize, "OUTLINE")
-        end
+    if type(FpsLatencyMeterConfig.fontSize) == "number" then
+        ApplyFont(allTexts, FpsLatencyMeterConfig.fontName, FpsLatencyMeterConfig.fontSize)
     end
 
     if FpsLatencyMeterConfig.fps then

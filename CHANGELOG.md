@@ -5,6 +5,12 @@ All notable changes to **FPS & Latency Meter** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.135] - 2026-11-05
+
+### Fixed
+- Error spam `FontString:SetFont(): Invalid font asset (Friz Quadrata TT): file not found` when the saved font isn't registered on the current client (e.g. a font from another addon that isn't installed there, as happened on WoW Forever). The fallback passed LibSharedMedia's default font *name* to `SetFont` instead of its file path. The default is now resolved to a path, with `STANDARD_TEXT_FONT` as the last resort.
+- Fonts are no longer re-applied on every frame; `SetFont` only runs when the resolved font or size changes.
+
 ## [0.2.134] - 2026-10-14
 
 ### Added

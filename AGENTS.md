@@ -45,7 +45,7 @@ Libraries: LibStub, CallbackHandler-1.0, LibSharedMedia-3.0, LibChangelog, UTF8 
 - **Retail-only features** go behind `TT:IsRetail()`. Colour pickers are one such feature today.
 - **Settings** go through `LibEQOLSettingsMode-1.0`, following the existing `CreateParentedSlider` / `CreateParentedScrollDown` helpers.
 - **Saved variables:** add new keys to `FpsLatencyMeterBaseConfig`. Never rename or remove existing keys without migrating them, because users' saved settings would be lost.
-- **Fonts:** always resolve them through LibSharedMedia, with a fallback to `LSM:GetDefault`. Never call `SetFont` with a nil path.
+- **Fonts:** always go through `ResolveFontPath` / `ApplyFont` in `main.lua`. Saved fonts may not exist on every client, and `LSM:GetDefault` returns a font *name*, not a path, so never pass its result to `SetFont` directly.
 - **Line endings:** `.lua` files use CRLF. Keep them that way.
 - **Style:** 4-space indentation, `local` everything, match the surrounding code.
 

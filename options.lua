@@ -141,28 +141,48 @@ local function ResetSettings()
     FpsLatencyMeterConfig.contentWorldMS = FpsLatencyMeterBaseConfig.contentWorldMS
 end
 
-local function ResetCfg()
-    ResetSettings()
-    local settingsToUpdate = {
-        "fps",
-        "latency",
-        "latencyHome",
-        "latencyWorld",
-        "refreshInterval",
-        "changeColor",
-        "highColor",
-        "mediumColor",
-        "lowColor",
-        "fontName",
-        "fontSize",
-        "contentFPS",
-        "contentHomeMS",
-        "contentWorldMS",
-    }
-    for _, variable in ipairs(settingsToUpdate) do
+local positionVariables = {
+    "FPS_fps_x_offset", "FPS_fps_y_offset", "FPS_fps_text_align",
+    "MS_ms_home_x_offset", "MS_ms_home_y_offset", "MS_ms_home_text_align",
+    "MS_ms_world_x_offset", "MS_ms_world_y_offset", "MS_ms_world_text_align",
+}
+
+local settingsVariables = {
+    "FPS_MS_fps_ms_refresh_timer",
+    "FPS_fps_show_text", "FPS_fps_text_content",
+    "MS_ms_show_text", "MS_ms_home_show_text", "MS_ms_home_text_content",
+    "MS_ms_world_show_text", "MS_ms_world_text_content",
+    "FPS_MS_fps_ms_font_name", "FPS_MS_fps_ms_font_size", "FPS_MS_fps_ms_show_colors",
+}
+
+-- Refreshes the already-built settings controls so they show the reset values
+local function NotifyAll(variables)
+    for _, variable in ipairs(variables) do
         Settings.NotifyUpdate(variable)
     end
 end
+
+local function ResetCfg()
+    ResetSettings()
+    NotifyAll(settingsVariables)
+end
+
+local function ActionResetPositions()
+    ResetPositions()
+    NotifyAll(positionVariables)
+    print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Positions have been reset to default.")
+end
+
+local function ActionResetSettings(reloadUI)
+    ResetCfg()
+    if reloadUI then
+        ReloadUI()
+    else
+        print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Configuration has been reset to default.")
+    end
+end
+
+local categoryID
 
 local function GetPositionLimits()
     local screenWidth = GetScreenWidth()
@@ -187,7 +207,7 @@ local maxValueY = limits.maxY
 
 local function Register()
     local category, layout = Settings.RegisterVerticalLayoutCategory(addOnTitle)
-    Settings.FPS_LATENCY_CATEGORY_ID = category:GetID()
+    categoryID = category:GetID()
 
     -- Function to create a slider with a parent section
     local function CreateParentedSlider(tbdb, tbvar, parentSection, prefix, key, name, default, min, max, step,
@@ -283,6 +303,21 @@ local function Register()
     SettingsLib:CreateText(category, {
         name =
         "If you have any questions or suggestions, please visit the |cff87bbcaFpsLatencyMeter|r addon page on |cff00ff00CurseForge|r.",
+    })
+
+    SettingsLib:CreateButton(category, {
+        key = "fps_ms_reset_positions",
+        label = "Positions",
+        text = "Reset Positions",
+        desc = "Resets all positions to default",
+        click = ActionResetPositions,
+    })
+    SettingsLib:CreateButton(category, {
+        key = "fps_ms_reset_settings",
+        label = "Settings",
+        text = "Reset Settings",
+        desc = "Resets all settings to default (except positions)",
+        click = function() ActionResetSettings(false) end,
     })
 
     --------------------------------------------------------------------------------
@@ -785,84 +820,11 @@ end
 
 SettingsRegistrar:AddRegistrant(Register)
 
-local function ActionResetPositions()
-    ResetPositions()
-    print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Positions have been reset to default.")
-end
-
-local function ActionResetSettings(reloadUI)
-    ResetCfg()
-    if reloadUI then
-        ReloadUI()
-    else
-        print("|cff59f0dc" .. addOnTitle .. ":|r " .. "Configuration has been reset to default.")
-    end
-end
-
-hooksecurefunc(SettingsPanel, "DisplayCategory", function(self, category)
-    local header = SettingsPanel.Container.SettingsList.Header
-    if category:GetID() == Settings.FPS_LATENCY_CATEGORY_ID then
-        if not header.FpsLatencyMeter_ResetPositions then
-            header.FpsLatencyMeter_ResetPositions = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
-            header.FpsLatencyMeter_ResetPositions:SetPoint("RIGHT", header.DefaultsButton, "LEFT", -10, 0)
-            header.FpsLatencyMeter_ResetPositions:SetSize(header.DefaultsButton:GetSize())
-            header.FpsLatencyMeter_ResetPositions:SetText("Reset Positions")
-            header.FpsLatencyMeter_ResetPositions:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-                GameTooltip:ClearLines()
-                GameTooltip:SetText("Resets all positions to default")
-                GameTooltip:Show()
-            end)
-            header.FpsLatencyMeter_ResetPositions:SetScript("OnLeave", function(self)
-                GameTooltip:Hide()
-            end)
-            header.FpsLatencyMeter_ResetPositions:SetScript("OnClick", function()
-                SettingsPanel:Hide()
-                ActionResetPositions()
-            end)
-        end
-        if not header.FpsLatencyMeter_ResetSettings then
-            header.FpsLatencyMeter_ResetSettings = CreateFrame("Button", nil, header, "UIPanelButtonTemplate")
-            header.FpsLatencyMeter_ResetSettings:SetPoint("LEFT", header.DefaultsButton, "LEFT", 0, 0)
-            header.FpsLatencyMeter_ResetSettings:SetSize(header.DefaultsButton:GetSize())
-            header.FpsLatencyMeter_ResetSettings:SetText("Reset Settings")
-            header.FpsLatencyMeter_ResetSettings:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-                GameTooltip:ClearLines()
-                GameTooltip:SetText("Resets all settings to default (except positions)")
-                GameTooltip:Show()
-            end)
-            header.FpsLatencyMeter_ResetSettings:SetScript("OnLeave", function(self)
-                GameTooltip:Hide()
-            end)
-            header.FpsLatencyMeter_ResetSettings:SetScript("OnClick", function()
-                SettingsPanel:Hide()
-                ActionResetSettings(false)
-            end)
-        end
-
-        header.FpsLatencyMeter_ResetPositions:Show()
-        header.FpsLatencyMeter_ResetSettings:Show()
-
-        if header.DefaultsButton:IsShown() then
-            header.DefaultsButton:Hide()
-        end
-    else
-        if header.FpsLatencyMeter_ResetPositions then
-            header.FpsLatencyMeter_ResetPositions:Hide()
-        end
-        if header.FpsLatencyMeter_ResetSettings then
-            header.FpsLatencyMeter_ResetSettings:Hide()
-        end
-        if not header.DefaultsButton:IsShown() then
-            header.DefaultsButton:Show()
-        end
-    end
-end)
-
 -- for addon compartment (in .toc)
 function OpenFpsLatencySettings()
-    Settings.OpenToCategory(Settings.FPS_LATENCY_CATEGORY_ID)
+    if categoryID then
+        Settings.OpenToCategory(categoryID)
+    end
 end
 
 SLASH_FPSLATENCY1 = "/fps"
@@ -871,7 +833,6 @@ SLASH_FPSLATENCY3 = "/ms"
 function SlashCmdList.FPSLATENCY(msg)
     local cmd = strlower(msg)
     if (cmd == "reset") then
-        ResetCfg()
         ActionResetSettings(true)
     else
         OpenFpsLatencySettings()

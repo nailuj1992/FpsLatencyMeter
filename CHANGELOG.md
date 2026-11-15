@@ -5,6 +5,15 @@ All notable changes to **FPS & Latency Meter** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.136] - 2026-11-15
+
+### Fixed
+- Taint error `attempt to compare local 'maxHealth' (a secret number value, while execution tainted by 'FpsLatencyMeter')` when changing a Blizzard setting such as the nameplate class color option. The addon no longer touches Blizzard's Settings panel from outside its own category:
+  - The "Reset Positions" / "Reset Settings" buttons are now regular rows inside the addon's settings page instead of buttons attached to Blizzard's panel header. The addon no longer hooks `SettingsPanel:DisplayCategory`, hides Blizzard's "Defaults" button, or calls `SettingsPanel:Hide()`.
+  - The category ID is kept in a local variable instead of being written into Blizzard's global `Settings` table.
+- "Reset Settings" and "Reset Positions" now refresh the open settings controls (the old refresh used names that matched no registered setting).
+- `/fps reset` no longer resets the configuration twice.
+
 ## [0.2.135] - 2026-11-05
 
 ### Fixed
